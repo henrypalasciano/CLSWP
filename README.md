@@ -6,3 +6,5 @@ Functions to compute the continuous wavelet transform and evolutionary wavelet t
 Available Wavelets: Haar, Ricker, Shannon.
 
 Link to paper: https://arxiv.org/abs/2310.12788
+
+$X_t = $
