@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pywt
-from wavelet_functions import Wavelet, Ricker
+from wavelet_functions import Wavelet
 
 
 # ==============================================================================================================
@@ -58,51 +58,6 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
         S = daub_inv_iter(I, A, mu, n_iter)
 
     return S
-
-
-def local_acf(S: np.ndarray, Wavelet: Wavelet, tau: np.ndarray) -> np.ndarray:
-    
-    """
-    Function for computing the local acf.
-    
-    Inputs:
-        S: np.ndarray - evolutionary wavelet spectrum
-        Wavelet: Wavelet - wavelet to use
-        tau: np.ndarray - time lags at whoch to compute the local acf
-        
-    Output:
-        acf: np.ndarray - local acf
-    """
-    scales = Wavelet.scales
-    delta = scales[1] - scales[0]
-    Psi = Wavelet.autocorrelation_wavelet(tau).T
-    
-    Psi = Psi
-    acf = delta * Psi @ S
-    
-    return acf
-
-
-def local_autocorrelation(acf):
-    
-    """ Function to compute local autocorrelation from the local acf. """
-    
-    ac =  acf / np.max(acf, axis=0)
-    
-    nan_idx = np.where(np.isnan(ac[0]))[0]
-    if len(nan_idx) > 0:
-        if nan_idx[0] == 0:
-            for idx in nan_idx[::-1]:
-                ac[:,idx] = ac[:,idx+1]
-        else:
-            for idx in nan_idx:
-                ac[:,idx] = ac[:,idx-1]
-        
-    
-    
-    #ac[:, np.isnan(ac[0])] = np.min(ac[:,~np.isnan(ac[0])], axis=1).reshape(-1,1)
-    
-    return ac
 
 # ==============================================================================================================
 # Regularisation Methods

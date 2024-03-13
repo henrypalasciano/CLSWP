@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from cwt_functions import cwt
-from ews_and_local_acf import ews, local_acf, local_autocorrelation, view, spectrum_points
-
+from ews import ews, view, spectrum_points
+from local_acf import local_autocovariance, local_autocorrelation
 
 class CLSWP():
     
@@ -100,7 +100,7 @@ class CLSWP():
         S = self.S[index]
         
         # Compute local acf and autocorrelation
-        acf = local_acf(S, self.Wavelet, tau)
+        acf = local_autocovariance(S, self.Wavelet, tau)
         local_autocorr = local_autocorrelation(acf)
         
         self.local_acf.append(acf)
