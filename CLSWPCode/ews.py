@@ -44,9 +44,6 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
     if method == "Daubechies_Iter_Asymmetric":
         S = daub_inv_iter_asym(I, A, mu, n_iter)
     
-    if method == "Spectral_Cut_Off":
-        S = spectral_cut_off(I, A, mu)
-    
     elif method == "Tikhonov":
         S = tikhonov(I, A, mu)
     
@@ -105,31 +102,6 @@ def tikhonov(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
     # Return (mu I + A^2)^-1 A y
     return B @ A @ y
 
-
-def spectral_cut_off(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
-    
-    """
-    Spectral cut off.
-    
-    Inputs:
-        y: np.ndarray - vector or matrix - y = Ax
-        A: np.ndarray - matrix operator
-        mu: float - regularisation parameter
-        
-    Output:
-        x: np.ndarray - solution of y = Ax
-    """
-    
-    eig, ev = np.linalg.eig(A)
-    ev = ev[:, eig**2 > mu]
-    eig = eig[eig**2 > mu]
-    eig = eig.reshape(-1,1)
-    coeffs = ev.T @ y / eig
-    x = np.zeros_like(y, dtype=float)
-    for i in range(np.shape(y)[1]):
-        x[:,i] = np.sum(ev * coeffs[:,i], axis = 1)
-    
-    return x
 
 
 def thr(x, mu):
