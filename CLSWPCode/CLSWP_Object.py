@@ -2,13 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from cwt_functions import cwt
-from ews import ews, view, spectrum_points
+from ews import ews, spectrum_points
 from local_acf import local_autocovariance, local_autocorrelation
+from plotting import view
 
 class CLSWP():
     
     """
-    Create a Continuous-time Locally Stationary Wavelet Process (CLSWP) Object
+    Continuous-time Locally Stationary Wavelet Process (CLSWP)
     
     Inputs:
         x: np.ndaarray - data
