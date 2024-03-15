@@ -1,8 +1,7 @@
 # %%
 import numpy as np
 from CLSWP_Object import CLSWP
-from wavelet_functions import Haar
-import time
+from wavelets import Haar
 
 x = np.random.randn(3000)
 s = np.linspace(2, 200, 199)

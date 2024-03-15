@@ -9,6 +9,7 @@ Contents:
 * ews.py - functions for computing the evolutionary wavelet spectrum;
 * local_acf.py - functions for computing the local autocovariance and autocorrelation;
 * plotting.py - plotting functions
+* smoothing.py - smoothing functions
 * CLSWP_Object - class for creating an instance of the continuous locally staionary wavelet process, for which one can compute the evolutionary wavelet spectrum and local autocovariance.
 
 Link to paper: https://arxiv.org/abs/2310.12788

@@ -1,9 +1,8 @@
 import numpy as np
-from wavelet_functions import Wavelet
-
+from wavelets import Wavelet
 
 # ================================================================================================
-# Continuou Wavelet Transform
+# Continuous Wavelet Transform
 # ================================================================================================
 
 def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, bc: str = "periodic",
@@ -35,7 +34,7 @@ def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, bc: str = "peri
 
 
 # ================================================================================================
-# Continuou Wavelet Transform - Zero Padding
+# Continuous Wavelet Transform - Zero Padding
 # ================================================================================================
 
 def cwt_zero(x, Wavelet, sampling_rate=1, omega=0):
@@ -249,12 +248,9 @@ def cwt_periodic_i(x, t, Wavelet, dv=None):
     return c
     
  
-    
- 
 # ================================================================================================
-# Continuou Wavelet Transform with Arbitrary Shifts
+# Continuous Wavelet Transform with Arbitrary Shifts
 # ================================================================================================
-
 
 def cwt_arbitrary_shifts(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, dv=1,
                          bc: str = "periodic") -> np.ndarray:
@@ -268,24 +264,24 @@ def cwt_arbitrary_shifts(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1
     c = np.empty([s, k * n])
     x_n = np.array([range(n * k)])
     
-    for i in range(k):
-        ind = (x_n % k == i)[0]
-        c[:, ind] = cwt_periodic(x, Wavelet, sampling_rate=sampling_rate, omega=dv * k)
-    
+        
     if bc == "periodic":
         for i in range(k):
             ind = (x_n % k == i)[0]
-            c[:, ind] = cwt_periodic(x, Wavelet, sampling_rate=sampling_rate, omega=dv * k)
+            c[:, ind] = cwt_periodic(x, Wavelet, sampling_rate=sampling_rate, omega=dv * i)
+        return c
     
     elif bc == "symmetric":
         for i in range(k):
             ind = (x_n % k == i)[0]
-            c[:, ind] = cwt_symmetric(x, Wavelet, sampling_rate=sampling_rate, omega=dv * k)
+            c[:, ind] = cwt_symmetric(x, Wavelet, sampling_rate=sampling_rate, omega=dv * i)
+        return c
     
     elif bc == "zero":
         for i in range(k):
             ind = (x_n % k == i)[0]
-            c[:, ind] = cwt_zero(x, Wavelet, sampling_rate=sampling_rate, omega=dv * k)
+            c[:, ind] = cwt_zero(x, Wavelet, sampling_rate=sampling_rate, omega=dv * i)
+        return c
     
     elif bc == "constant":
         raise TypeError("Not implemented yet")

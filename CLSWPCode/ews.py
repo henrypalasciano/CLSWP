@@ -1,5 +1,5 @@
 import numpy as np
-from wavelet_functions import Wavelet
+from wavelets import Wavelet
 from smoothing import smoothing
 
 # ===================================
