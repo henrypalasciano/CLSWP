@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 
 class Wavelet(ABC):
-    
+    """
+    Abstract base class for wavelet objects.
+    """
+
     @abstractmethod
     def __init__(self, scales):
         self.name = None

@@ -2,10 +2,9 @@ import numpy as np
 from wavelet_functions import Wavelet
 from smoothing import smoothing
 
-# ==============================================================================================================
-# Evolutionary Wavelet Spectrum and Local Autocovariance
-# ==============================================================================================================
-
+# ===================================
+# Evolutionary Wavelet Spectrum
+# ===================================
 
 def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
         method: str = "Daubechies_Iter_Asymmetric",  n_iter: int = 100, 
@@ -42,14 +41,13 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
         S = tikhonov(I, A, mu)
     
     elif method == "Lasso":
-        S = daub_inv(I, A, mu)
+        S = lasso(I, A, mu)
 
     return S
 
-# ==============================================================================================================
+# ===================================
 # Regularisation Methods
-# ==============================================================================================================
-
+# ===================================
 
 def daub_inv_iter_asym(y, A, mu, n_iter):
     """
@@ -63,43 +61,45 @@ def daub_inv_iter_asym(y, A, mu, n_iter):
 
     Returns:
         ndarray: Evolutionary wavelet spectrum.
-
     """
+    # Initialize the solution vector x with random values between 0 and 1
     x = np.random.uniform(0, 1, np.shape(y))
+    # Normalize the inner product matrix A by dividing it by the largest eigenvalue
     e = np.real(np.linalg.eig(A)[0][0])
     A = A / e
+    # Compute A @ y - mu / 2 and A @ A
     A_y = A @ y - mu / 2
     A_2 = A @ A
     
+    # Perform the iterative scheme for n_iter iterations
     for i in range(n_iter):
+        # Update the solution vector x using the iterative scheme
         x = np.maximum(x + A_y - A_2 @ x, 0)
         
+    # Return the normalized solution vector x
     return x / e
 
-
 def tikhonov(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
-    
     """
-    Tikhonov regularisation.
+    Tikhonov regularization.
+
+    This function solves the equation y = Ax using Tikhonov regularization.
     
-    Inputs:
-        y: np.ndarray - vector or matrix - y = Ax
-        A: np.ndarray - matrix operator
-        mu: float - regularisation parameter
+    Args:
+        y (np.ndarray): The vector or matrix y = Ax.
+        A (np.ndarray): The matrix operator.
+        mu (float): The regularization parameter.
         
-    Output:
-        x: np.ndarray - solution of y = Ax
+    Returns:
+        np.ndarray: The solution x of y = Ax.
     """
-    
-    m,n = np.shape(A)
+    m, n = np.shape(A)
     # Compute inverse of (mu I + A^2)
     B = np.linalg.inv(mu * np.eye(m) + A @ A)
     # Return (mu I + A^2)^-1 A y
     return B @ A @ y
 
-
-def daub_inv(y, A, mu):
-    
+def lasso(y, A, mu):    
     eig, ev = np.linalg.eig(A)
     eig = eig.reshape(-1,1)
     coeffs = threshold(ev.T @ y * eig, mu) / (eig ** 2)
