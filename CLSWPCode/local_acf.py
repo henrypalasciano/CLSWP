@@ -7,33 +7,32 @@ def local_autocovariance(S: np.ndarray, Wavelet: Wavelet, tau: np.ndarray) -> np
     """
     Compute the local autocovariance given the spectrum.
     
-    Inputs:
-        S: np.ndarray - evolutionary wavelet spectrum
-        Wavelet: Wavelet - wavelet used
-        tau: np.ndarray - time lags of interest
+    Args:
+        S (np.ndarray): Evolutionary wavelet spectrum
+        Wavelet (Wavelet): Wavelet used
+        tau (np.ndarray): Time lags of interest
         
-    Output:
-        acf: np.ndarray - local autocovariance
+    Returns:
+        np.ndarray: Local autocovariance
     """
     scales = Wavelet.scales
-    delta = scales[1] - scales[0]
     Psi = Wavelet.autocorrelation_wavelet(tau).T
     
-    Psi = Psi
-    acf = delta * Psi @ S
+    acf = (scales[1] - scales[0]) * Psi @ S
     
     return acf
 
 
 def local_autocorrelation(acf: np.ndarray) -> np.ndarray:
     
-    """ 
+    """
     Compute local autocorrelation from local autocovariance.
 
-    Inputs:
-        acf: np.ndarray - local_autocovariance
-    Output:
-        ac: np.ndarray - local_autocorrelation
+    Args:
+        acf (np.ndarray): Local autocovariance
+
+    Returns:
+        np.ndarray: Local autocorrelation
     """
     
     ac =  acf / np.max(acf, axis=0)

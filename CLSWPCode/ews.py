@@ -1,7 +1,6 @@
 import numpy as np
-import pywt
 from wavelet_functions import Wavelet
-
+from smoothing import smoothing
 
 # ==============================================================================================================
 # Evolutionary Wavelet Spectrum and Local Autocovariance
@@ -14,7 +13,7 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
     """
     Compute the Evolutionary Wavelet Spectrum (EWS).
 
-    Parameters:
+    Args:
         c (np.ndarray): Wavelet coefficients.
         A (np.ndarray): Inner product kernel.
         scales (np.ndarray): Regularly spaced scales.
@@ -44,9 +43,6 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
     
     elif method == "Lasso":
         S = daub_inv(I, A, mu)
-    
-    elif method == "Daubechies_Iter":
-        S = daub_inv_iter(I, A, mu, n_iter)
 
     return S
 
@@ -59,14 +55,14 @@ def daub_inv_iter_asym(y, A, mu, n_iter):
     """
     Daubechies Iterative Scheme with Asymmetric Regularisation.
 
-    Parameters:
-    y (ndarray): Raw wavelet periodogram.
-    A (ndarray): Inner product matrix.
-    mu (float): Threshold.
-    n_iter (int): Number of iterations.
+    Args:
+        y (ndarray): Raw wavelet periodogram.
+        A (ndarray): Inner product matrix.
+        mu (float): Threshold.
+        n_iter (int): Number of iterations.
 
     Returns:
-    ndarray: Evolutionary wavelet spectrum.
+        ndarray: Evolutionary wavelet spectrum.
 
     """
     x = np.random.uniform(0, 1, np.shape(y))
@@ -106,37 +102,17 @@ def daub_inv(y, A, mu):
     
     eig, ev = np.linalg.eig(A)
     eig = eig.reshape(-1,1)
-    coeffs = thr(ev.T @ y * eig, mu) / (eig ** 2)
+    coeffs = threshold(ev.T @ y * eig, mu) / (eig ** 2)
     coeffs = coeffs.T
     ev = np.array([ev.T])
     x = coeffs @ ev
     
     return x[0].T
 
-
-
-# ==============================================================================================================
-# Smoothing
-# ==============================================================================================================
-
-
-def smoothing(I, wavelet="db10", by_level=True):
+def threshold(x, mu):
     
-    (m, n) = np.shape(I)
-    coeffs = pywt.wavedec(I, wavelet, axis=1)
-    coeffs_stacked = np.hstack(coeffs[1:])
+    x[np.abs(x) < mu / 2] = 0 
+    x[x >= mu / 2] -= mu / 2
+    x[x <= - mu / 2] += mu / 2
     
-    if by_level:
-        t = np.std(coeffs_stacked, axis=1) * np.log(n)
-        t = t.reshape(-1,1)
-            
-    else:
-        t = np.std(coeffs_stacked) * np.log(n)
-        
-    for i,c in enumerate(coeffs[1:]):
-        c[np.abs(c) <= t] = 0
-        coeffs[i+1] = c
-    
-    I = pywt.waverec(coeffs, wavelet, axis=1)
-    
-    return I
+    return x
