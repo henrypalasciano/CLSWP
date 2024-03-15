@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from cwt_functions import cwt
-from ews import ews, spectrum_points
+from ews import ews
 from local_acf import local_autocovariance, local_autocorrelation
 from plotting import view
 

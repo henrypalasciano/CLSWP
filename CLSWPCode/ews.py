@@ -63,21 +63,18 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
 def daub_inv_iter_asym(y, A, mu, n_iter):
     
     x = np.random.uniform(0, 1, np.shape(y))
+    x = np.zeros_like(y) + 0.5
     e = np.real(np.linalg.eig(A)[0][0])
     A = A / e
+    A_y = A @ y - mu / 2
+    A_2 = A @ A
     
     for i in range(n_iter):
-        x = thr_asym(x + A @ (y - A @ x), mu)
+        x += A_y - A_2 @ x
+        x *= (x > 0)
         
     return x / e
 
-
-def thr_asym(x, mu):
-    
-    x[x < mu / 2] = 0 
-    x[x >= mu / 2] -= mu / 2
-    
-    return x
 
 
 
