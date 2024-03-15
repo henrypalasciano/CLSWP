@@ -76,7 +76,7 @@ def daub_inv_iter_asym(y, A, mu, n_iter):
     A_2 = A @ A
     
     for i in range(n_iter):
-        x = np.maximum(x + A_y - A_2 @ x)
+        x = np.maximum(x + A_y - A_2 @ x, 0)
         
     return x / e
 

@@ -4,11 +4,11 @@ from CLSWP_Object import CLSWP
 from wavelet_functions import Haar
 import time
 
-x = np.random.randn(2000)
+x = np.random.randn(3000)
 s = np.linspace(2, 200, 199)
 
 # %%
-s = np.linspace(2, 1000, 199)
+s = np.linspace(2, 300, 299)
 c = CLSWP(x, Haar, s)
 
 #delta = s[1] - s[0]
@@ -18,6 +18,8 @@ A_h = c.A
 
 e = np.real(np.linalg.eig(A_h)[0][0])
 print(e)
+
+I = c.coeffs ** 2
 
 # %%
 
@@ -64,12 +66,11 @@ def daub_inv_iter_asym3(y, A, mu, n_iter):
     x = np.zeros_like(y) + 0.5
     e = np.real(np.linalg.eig(A)[0][0])
     A = A / e
-    A_y = A @ y
+    A_y = A @ y - mu / 2
     A_2 = A @ A
     
     for i in range(n_iter):
-        x += A_y - A_2 @ x - mu / 2
-        x *= (x > 0)
+        x = np.maximum(x + A_y - A_2 @ x, 0)
         
     return x / e
 
@@ -86,6 +87,6 @@ print(t4 - t3)
 print(np.mean(np.abs(a-a2)), np.mean(np.abs(a2-a3)))
 
 # %%
-max(np.array([1,-1,3]).all(), 0)
+np.maximum(np.array([1,-1,3]), 0)
 
 # %%
