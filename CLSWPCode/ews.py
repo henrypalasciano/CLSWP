@@ -20,9 +20,9 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
         mu (float or np.ndarray, optional): Regularisation parameter. Defaults to 0.01.
         method (str, optional): Regularisation method. Defaults to "Daubechies_Iter_Asymmetric".
         n_iter (int, optional): Number of iterations. Defaults to 100.
-        smooth (bool, optional): Whether to smooth the raw wavelet periodogram. Defaults to True.
+        smooth (bool, optional): Smooth the raw wavelet periodogram. Defaults to True.
         wavelet (str, optional): Wavelet to use for performing the smoothing. Defaults to "db4".
-        by_level (bool, optional): Whether to smooth by level. Defaults to True.
+        by_level (bool, optional):  If True, smooth by level. If False, smooth globally. Defaults to True.
 
     Returns:
         np.ndarray: Evolutionary wavelet spectrum.
