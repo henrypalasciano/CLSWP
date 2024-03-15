@@ -1,7 +1,6 @@
 import numpy as np
 from wavelets import Wavelet
 
-
 def local_autocovariance(S: np.ndarray, Wavelet: Wavelet, tau: np.ndarray) -> np.ndarray:
     
     """
