@@ -11,36 +11,31 @@ from wavelet_functions import Wavelet
 def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
         method: str = "Daubechies_Iter_Asymmetric",  n_iter: int = 100, 
         smooth: bool = True, wavelet: str = "db4", by_level: bool = True) -> np.ndarray:
-    
     """
-    Function to compute the Evolutionary Wavelet Spectrum (EWS)
-    
-    Inputs:
-        c: np.ndarray -  wavelet coefficients
-        A: np.ndarray - inner product kernel
-        scales: np.ndarray - scales, assumed to be regularly spaced
-        mu: float or np.ndarray - regularisation parameter
-        method: str - regularisation method
-        n_iter: int - number of iterations
-        smooth: bool - whether to smooth the raw wavelet periodogram
-        wavelet: str - wavelet to use for performing the smoothing
-        by_level: bool - whether to smooth by level or universally
-        
-    Output:
-        S: np.ndarray - evolutionary wavelet spectrum
+    Compute the Evolutionary Wavelet Spectrum (EWS).
+
+    Parameters:
+        c (np.ndarray): Wavelet coefficients.
+        A (np.ndarray): Inner product kernel.
+        scales (np.ndarray): Regularly spaced scales.
+        mu (float or np.ndarray, optional): Regularisation parameter. Defaults to 0.01.
+        method (str, optional): Regularisation method. Defaults to "Daubechies_Iter_Asymmetric".
+        n_iter (int, optional): Number of iterations. Defaults to 100.
+        smooth (bool, optional): Whether to smooth the raw wavelet periodogram. Defaults to True.
+        wavelet (str, optional): Wavelet to use for performing the smoothing. Defaults to "db4".
+        by_level (bool, optional): Whether to smooth by level. Defaults to True.
+
+    Returns:
+        np.ndarray: Evolutionary wavelet spectrum.
     """
-    
-    # Compute delta, the spacing between scales (necessary, since this is a discretisation
-    # of a continuous object)
-    delta = scales[1] - scales[0]
     # Compute the raw wavelets periodogram and rescale by delta
-    I = c ** 2 / delta
+    I = c ** 2 / (scales[1] - scales[0])
     
     # Smooth the raw wavelet periodogram
     if smooth:
         I = smoothing(I, wavelet=wavelet, by_level=by_level)
     
-    # Compute the Evolutionary Wavelet Spectrum using one of the soecified methods
+    # Compute the Evolutionary Wavelet Spectrum using one of the specified methods
     if method == "Daubechies_Iter_Asymmetric":
         S = daub_inv_iter_asym(I, A, mu, n_iter)
     
@@ -61,22 +56,29 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
 
 
 def daub_inv_iter_asym(y, A, mu, n_iter):
-    
+    """
+    Daubechies Iterative Scheme with Asymmetric Regularisation.
+
+    Parameters:
+    y (ndarray): Raw wavelet periodogram.
+    A (ndarray): Inner product matrix.
+    mu (float): Threshold.
+    n_iter (int): Number of iterations.
+
+    Returns:
+    ndarray: Evolutionary wavelet spectrum.
+
+    """
     x = np.random.uniform(0, 1, np.shape(y))
-    x = np.zeros_like(y) + 0.5
     e = np.real(np.linalg.eig(A)[0][0])
     A = A / e
     A_y = A @ y - mu / 2
     A_2 = A @ A
     
     for i in range(n_iter):
-        x += A_y - A_2 @ x
-        x *= (x > 0)
+        x = np.maximum(x + A_y - A_2 @ x)
         
     return x / e
-
-
-
 
 
 def tikhonov(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
@@ -100,17 +102,6 @@ def tikhonov(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
     return B @ A @ y
 
 
-
-def thr(x, mu):
-    
-    x[np.abs(x) < mu/2] = 0 
-    x[x >= mu/2] -= mu/2
-    x[x <= -mu/2] += mu/2
-    
-    return x
-    
-
-
 def daub_inv(y, A, mu):
     
     eig, ev = np.linalg.eig(A)
@@ -122,32 +113,6 @@ def daub_inv(y, A, mu):
     
     return x[0].T
 
-
-def daub_inv_iter_eig(y, A, mu, n_iter):
-    
-    eig, ev = np.linalg.eig(A)
-    x = np.random.uniform(0, 1, np.shape(y))
-    evT = np.array([ev.T])
-    for i in range(n_iter):
-        coeffs = thr(ev.T @ (x + A @ (y - (A @ x))), mu)
-        coeffs = coeffs.T
-        x = coeffs @ evT
-        x = x[0].T
-    
-    return x
-
-
-
-def daub_inv_iter(y, A, mu, n_iter):
-    
-    x = np.random.uniform(0, 1, np.shape(y))
-    e = np.linalg.eig(A)[0][0]
-    A = A / e
-    
-    for i in range(n_iter):
-        x = thr(x + A @ (y - A @ x), mu)
-        
-    return x / e
 
 
 # ==============================================================================================================
