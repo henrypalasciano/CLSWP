@@ -28,7 +28,7 @@ def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, bc: str = "peri
         return cwt_constant(x, Wavelet, sampling_rate)
     
     else:
-        raise TypeError("""Boundary condition {bc} not implemented. Available options:\n 
+        raise TypeError("""Invalid boundary condition: {bc}. Available options:\n 
                         symmetric, periodic, constant or zero.""".format(bc=bc))
     
 
@@ -37,14 +37,24 @@ def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, bc: str = "peri
 # Continuous Wavelet Transform - Zero Padding
 # ================================================================================================
 
-def cwt_zero(x, Wavelet, sampling_rate=1, omega=0):
+def cwt_zero(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
+    """
+    Computes the continuous wavelet transform (CWT) using zero padding at the boundaries.
+
+    Args:
+        x (np.ndarray): The input signal.
+        Wavelet (np.ndarray): The wavelet to be used for the CWT.
+        sampling_rate (float, optional): The sampling rate of the input signal. Defaults to 1.
+        alpha (float, optional): The shift parameter. Defaults to 0.
+
+    Returns:
+        np.ndarray: The CWT coefficients.
+    """
     
     scales = Wavelet.scales
-    s = len(scales)
     n = len(x)
-    c = np.empty([s,n])
-    
-    delta = 1 / sampling_rate
+    c = np.empty([len(scales), n])
+     
     a = int(np.ceil(n / 2))
     b = int(np.floor(n / 2))
     
@@ -58,25 +68,32 @@ def cwt_zero(x, Wavelet, sampling_rate=1, omega=0):
             k2 = np.round(m / 2 + b).astype(int)
             W_i = W_i[k1:k2]
         
-        c_i = np.convolve(W_i, x, "same")
-        c[i] = c_i
+        c[i] = np.convolve(W_i, x, "same")
     
-    return c * delta
+    return c / sampling_rate
 
 
 # ================================================================================================
-# Continuou Wavelet Transform - Period Boundary
+# Continuous Wavelet Transform - Period Boundary
 # ================================================================================================
 
 
-def cwt_periodic(x, Wavelet, sampling_rate=1, omega=0):
-    
+def cwt_periodic(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
+    """
+    Computes the continuous wavelet transform (CWT) using periodic boundary conditions.
+
+    Args:
+        x (np.ndarray): The input signal.
+        Wavelet (np.ndarray): The wavelet to be used for the CWT.
+        sampling_rate (float, optional): The sampling rate of the input signal. Defaults to 1.
+        alpha (float, optional): The shift parameter. Defaults to 0.
+
+    Returns:
+        np.ndarray: The CWT coefficients.
+    """
     scales = Wavelet.scales
-    s = len(scales)
     n = len(x)
-    c = np.empty([s,n])
-    
-    delta = 1 / sampling_rate
+    c = np.empty([len(scales), n])
     
     lower, upper, n_points = Wavelet.wavelet_filter(sampling_rate)
     
@@ -93,21 +110,30 @@ def cwt_periodic(x, Wavelet, sampling_rate=1, omega=0):
         c_i = np.convolve(W_i, x_i, "valid")
         c[i] = c_i
     
-    return c * delta
+    return c / sampling_rate
 
 # ================================================================================================
-# Continuou Wavelet Transform - Symmetric Boundary
+# Continuous Wavelet Transform - Symmetric Boundary
 # ================================================================================================
 
 
-def cwt_symmetric(x, Wavelet, sampling_rate=1, omega=0):
-    
+def cwt_symmetric(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
+    """
+    Computes the continuous wavelet transform (CWT) using symmetric boundary conditions.
+
+    Args:
+        x (np.ndarray): The input signal.
+        Wavelet (np.ndarray): The wavelet to be used for the CWT.
+        sampling_rate (float, optional): The sampling rate of the input signal. Defaults to 1.
+        alpha (float, optional): The shift parameter. Defaults to 0.
+
+    Returns:
+        np.ndarray: The CWT coefficients.
+    """
     scales = Wavelet.scales
     s = len(scales)
     n = len(x)
     c = np.empty([s,n])
-    
-    delta = 1 / sampling_rate
     
     lower, upper, n_points = Wavelet.wavelet_filter(sampling_rate)
     x_original = x
@@ -123,20 +149,31 @@ def cwt_symmetric(x, Wavelet, sampling_rate=1, omega=0):
                 x_i = x.take(range(n-a, 2*n+b), mode="wrap")
             else: 
                 x_i = x_original
-            W_i = Wavelet.wavelet(np.linspace(lb, ub, m) + omega, scale)
+            W_i = Wavelet.wavelet(np.linspace(lb, ub, m) + alpha, scale)
             c_i = np.convolve(W_i, x_i, "valid")
             c[i] = c_i
             
-    return c * delta
+    return c / sampling_rate
 
 
 # ================================================================================================
-# Continuou Wavelet Transform - Constant Boundary
+# Continuous Wavelet Transform - Constant Boundary
 # ================================================================================================
 
 
-def cwt_constant(x, Wavelet, sampling_rate=1, omega=0):
-    
+def cwt_constant(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
+    """
+    Computes the continuous wavelet transform (CWT) using constant values at the boundaries.
+
+    Args:
+        x (np.ndarray): The input signal.
+        Wavelet (np.ndarray): The wavelet to be used for the CWT.
+        sampling_rate (float, optional): The sampling rate of the input signal. Defaults to 1.
+        alpha (float, optional): The shift parameter. Defaults to 0.
+
+    Returns:
+        np.ndarray: The CWT coefficients.
+    """
     scales = Wavelet.scales
     s = len(scales)
     n = len(x)
@@ -268,19 +305,19 @@ def cwt_arbitrary_shifts(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1
     if bc == "periodic":
         for i in range(k):
             ind = (x_n % k == i)[0]
-            c[:, ind] = cwt_periodic(x, Wavelet, sampling_rate=sampling_rate, omega=dv * i)
+            c[:, ind] = cwt_periodic(x, Wavelet, sampling_rate=sampling_rate, alpha=dv * i)
         return c
     
     elif bc == "symmetric":
         for i in range(k):
             ind = (x_n % k == i)[0]
-            c[:, ind] = cwt_symmetric(x, Wavelet, sampling_rate=sampling_rate, omega=dv * i)
+            c[:, ind] = cwt_symmetric(x, Wavelet, sampling_rate=sampling_rate, alpha=dv * i)
         return c
     
     elif bc == "zero":
         for i in range(k):
             ind = (x_n % k == i)[0]
-            c[:, ind] = cwt_zero(x, Wavelet, sampling_rate=sampling_rate, omega=dv * i)
+            c[:, ind] = cwt_zero(x, Wavelet, sampling_rate=sampling_rate, alpha=dv * i)
         return c
     
     elif bc == "constant":
@@ -307,7 +344,7 @@ def cwt_periodic_s(x, Wavelet, sampling_rate=1, dv=1):
     
     for i in range(k):
         ind = (x_n % k == i)[0]
-        c[:, ind] = cwt_periodic(x, Wavelet, sampling_rate=sampling_rate, omega=dv * k)
+        c[:, ind] = cwt_periodic(x, Wavelet, sampling_rate=sampling_rate, alpha=dv * k)
     
     return c
 

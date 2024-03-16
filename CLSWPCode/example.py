@@ -10,3 +10,7 @@ s = np.linspace(2, 200, 199)
 c = CLSWP(x, Haar, s)
 
 
+
+# %%
+c.compute_ews(0.01)
+# %%
