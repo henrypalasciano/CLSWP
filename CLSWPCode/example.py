@@ -12,5 +12,7 @@ c = CLSWP(x, Haar, s)
 
 
 # %%
-c.compute_ews(0.01)
+c.compute_ews(0.01, n_iter=10000)
+# %%
+c.view_ews()
 # %%

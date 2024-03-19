@@ -6,134 +6,147 @@ from local_acf import local_autocovariance, local_autocorrelation
 from plotting import view
 
 class CLSWP():
-    
     """
     Continuous-time Locally Stationary Wavelet Process (CLSWP)
     
-    Inputs:
-        x: np.ndaarray - data
-        Wavelet: Wavelet Object
-        scales: np.ndarray - scales, assumed to be regularly spaced
-        sampling rate: int
-        bc: boundary conditions - symmetric, periodic, zero and constant
+    This class represents a Continuous-time Locally Stationary Wavelet Process (CLSWP).
+    It computes the continuous wavelet transform and stores the coefficients.
+    It also provides functions to compute the evolutionary wavelet spectrum, local autocovariance,
+    and autocorrelation, and view the inner product kernel, ews, local autocovariance, and autocorrelation.
     
-    Computes continuous wavelet transform and stores this in self.coeffs
+    Attributes:
+        x (np.ndarray): Data.
+        Wavelet (Wavelet Object): Wavelet object.
+        scales (np.ndarray): Scales, assumed to be regularly spaced.
+        sampling_rate (int): Sampling rate.
+        bc (str): Boundary conditions - symmetric, periodic, zero, and constant.
+        irregularly_spaced (bool): Whether the data is irregularly spaced.
+        times (np.ndarray): Time points corresponding to the data  (for irregularly spaced data only).
+        min_spacing (float): Minimum spacing between time points (for irregularly spaced data only).
+        coeffs (np.ndarray): Coefficients of the continuous wavelet transform.
+        A (np.ndarray): Inner product kernel.
+        S (list): List to store the evolutionary wavelet spectrum.
+        params (list): List to store the parameters used in computing the evolutionary wavelet spectrum.
+        local_acf (list): List to store the local autocovariance.
+        local_autocorr (list): List to store the local autocorrelation.
+        tau (list): List to store the time lags used in computing the local autocovariance and autocorrelation.
     
-    Functions:
-        compute_ews - compute the evolutionary wavelet spectrum and store the
-        result in self.S. Store the paramteres used in self.params
-        compute_local_acf - compute the local autocovariance and autocorrelation 
-        and store these is self.local_acf and self.local_autocorr respectively 
-        and the time lags used in self.tau
-        view_A, view_ews, view_local_acf, view_local_autocorr - view the inner 
-        product kernel, ews, local autocovariance and autocorrelation respectively.
-        For the latter three, can specify which of these to use via the index
-        argument.
-        
-    The compute_ews and compute_local_acf allow one to compute the quantities 
-    several times for different parameter values and store these in corresponding
-    arrays for easy access.
+    Methods:
+        compute_ews(mu, method, n_iter, smooth, smooth_wav, by_level):
+            Compute the evolutionary wavelet spectrum.
+        compute_local_acf(tau, index):
+            Compute the local autocovariance and autocorrelation.
+        view_A():
+            View the inner product kernel.
+        view_ews(norm, sqrt, log, index):
+            View the evolutionary wavelet spectrum.
+        view_local_acf(index):
+            View the local autocovariance.
+        view_local_autocorr(index):
+            View the local autocorrelation.
     """
     
     def __init__(self, x, Wavelet, scales, sampling_rate=1, bc="symmetric",
                  irregularly_spaced=False, times=None, min_spacing=None):
+        """
+        Initialize the CLSWP object.
         
-        self.x = x # Data
-        self.scales = scales # Scales
+        Args:
+            x (np.ndarray): Data.
+            Wavelet (Wavelet Object): Wavelet object.
+            scales (np.ndarray): Scales, assumed to be regularly spaced.
+            sampling_rate (int): Sampling rate.
+            bc (str): Boundary conditions - symmetric, periodic, zero, and constant.
+            irregularly_spaced (bool): Whether the data is irregularly spaced.
+            times (np.ndarray): Time points corresponding to the data (for irregularly spaced data only).
+            min_spacing (float): Minimum spacing between time points (for irregularly spaced data only).
+        """
+        
+        self.x = x
+        self.scales = scales
         self.Wavelet = Wavelet(scales)
-        # Compute Wavelet Transform and Inner Product Kernel for later use
         self.coeffs = cwt(x, self.Wavelet, sampling_rate=sampling_rate, bc=bc,
                           irregularly_spaced=irregularly_spaced, times=times,
                           min_spacing=min_spacing)
         self.A = self.Wavelet.inner_product_kernel()
-        
-        # Arrays for storing the various ews and corresponding parameters
         self.S = []
         self.params = []
-        
-        # Arrays for storing the various local acf and autocorrelations and their
-        # corresponding parameters
-        self.local_acf = []
+        self.local_autocov = []
         self.local_autocorr = []
         self.tau = []
     
         
     def compute_ews(self, mu, method="Daubechies_Iter_Asymmetric", n_iter=100, smooth=True,
                     smooth_wav="db4", by_level=True):
-        
         """
-        Function for computing the evolutionary wavelet spectrum
+        Compute the evolutionary wavelet spectrum.
         
-        Inputs:
-            mu: float - regularisation parameter
-            method: str - regularisation method to use
-            n_iter (optional, default 100): int - number of iterations (only necessary when using a
-                                                iterative regularisation method)
-            smooth (optional, default True): bool - whether to smooth the raw wavelet periodogram
-            smooth_wav (optional, default db4): str - smoothing wavelet
-            by_level (optional, default True): bool - whether to smooth by level or universally
+        Args:
+            mu (float): Regularisation parameter.
+            method (str): Regularisation method to use.
+            n_iter (int): Number of iterations (only necessary when using an iterative regularisation method).
+            smooth (bool): Whether to smooth the raw wavelet periodogram.
+            smooth_wav (str): Smoothing wavelet.
+            by_level (bool): Whether to smooth by level or universally.
         """
-        
         S = ews(self.coeffs, self.A, self.scales, mu=mu, method=method, n_iter=n_iter,
                 smooth=smooth, wavelet=smooth_wav, by_level=by_level)
-        
         self.S.append(S)
-        if smooth:
-            self.params.append((mu, method, n_iter, smooth, smooth_wav))
-        else:
-            self.params.append((mu, method, n_iter, smooth, None))
+        self.params.append((mu, method, n_iter, smooth, smooth * smooth_wav))
 
-    
-    def compute_local_acf(self, tau, index=None):
-        
+    def compute_local_acf(self, tau, index=-1):
         """
-        Function for computing the local acf.
+        Compute the local autocovariance and autocorrelation.
         
-        Inputs:
-            tau: np.ndarray - time lags
-            index (optional, default None): int - index of spectrum to use in self.S
+        Args:
+            tau (np.ndarray): Time lags.
+            index (int): Index of spectrum to use in self.S.
         """
-        
-        # If no index supplied, use latest ews
-        if index == None:
-            index = len(self.S) - 1
         S = self.S[index]
-        
-        # Compute local acf and autocorrelation
         acf = local_autocovariance(S, self.Wavelet, tau)
-        local_autocorr = local_autocorrelation(acf)
-        
-        self.local_acf.append(acf)
-        self.local_autocorr.append(local_autocorr)
+        self.local_autocov.append(acf)
+        self.local_autocorr.append(local_autocorrelation(acf))
         self.tau.append((index, tau))
         
         
     def view_A(self):
-        """ View the inner product kernel """
-        view(self.A, self.scales, which=0, title = self.Wavelet.name + " Inner Product Kernel")
+        """ View the inner product kernel. """
+        view(self.A, self.scales, which=0, title=self.Wavelet.name + " Inner Product Kernel")
     
     
-    def view_ews(self, norm=False, sqrt=False, log=False, index=-1):
-        """ View an ews depending on index supplied. The viewed ews can be normalised, 
-        square root transfromed or log transformed to improve visibility """
+    def view_ews(self, sqrt=False, log=False, index=-1):
+        """
+        View the evolutionary wavelet spectrum.
+        
+        Args:
+            sqrt (bool): Whether to take the square root transform of the spectrum.
+            log (bool): Whether to take the log transform of the spectrum.
+            index (int): Index of the spectrum to view.
+        """
         if sqrt:
             view(np.sqrt(self.S[index]), self.scales, which=1)
         elif log:
-            view(np.log(self.S[index]+0.0001), self.scales, which=1)
-        elif norm:
-            S = self.S[index]
-            S = S / np.sum(S, axis=0)
-            view(S, self.scales, which=1)
+            view(np.log(self.S[index] + 0.0001), self.scales, which=1)
         else:
             view(self.S[index], self.scales, which=1)
         
         
-    def view_local_acf(self, index=-1):
-        """ View a local acf depending on index supplied. """
-        view(self.local_acf[index], self.tau[index][1], which=2)
+    def view_local_autocov(self, index=-1):
+        """
+        View the local autocovariance.
+        
+        Args:
+            index (int): Index of the local autocovariance to view.
+        """
+        view(self.local_autocov[index], self.tau[index][1], which=2)
         
     def view_local_autocorr(self, index=-1):
-        """ View a local autocorrelation depending on index supplied. """
+        """
+        View the local autocorrelation.
+        
+        Args:
+            index (int): Index of the local autocorrelation to view.
+        """
         view(self.local_autocorr[index], self.tau[index][1], which=2)
         
         
