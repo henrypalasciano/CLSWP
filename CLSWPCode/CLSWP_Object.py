@@ -16,7 +16,7 @@ class CLSWP():
     
     Attributes:
         x (np.ndarray): Data.
-        Wavelet (Wavelet Object): Wavelet object.
+        Wavelet (Wavelet Object): Non-initialised wavelet class.
         scales (np.ndarray): Scales, assumed to be regularly spaced.
         sampling_rate (int): Sampling rate.
         bc (str): Boundary conditions - symmetric, periodic, zero, and constant.
