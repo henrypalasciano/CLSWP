@@ -8,7 +8,23 @@ from wavelets import Wavelet
 def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, bc: str = "periodic",
         missing_data: bool = False, irregularly_spaced: bool = False, 
         times: np.array = None, min_spacing: float = None) -> np.ndarray:
-    
+    """
+    Computes the Continuous Wavelet Transform (CWT) of a given time series.
+
+    Args:
+        x (np.ndarray): The input time series.
+        Wavelet (Wavelet): The wavelet to be used for the transform.
+        sampling_rate (int): The sampling rate of the signal. Default is 1.
+        bc (str): The boundary condition to be used. Available options are "periodic", "symmetric", "zero", and "constant". Default is "periodic".
+        missing_data (bool): Whether the input signal contains missing data. Default is False.
+        irregularly_spaced (bool): Whether the input signal is irregularly spaced. Default is False.
+        times (np.array): The time values corresponding to the input signal. Required if irregularly_spaced is True.
+        min_spacing (float): The minimum spacing between time values. Required if irregularly_spaced is True.
+
+    Returns:
+        np.ndarray: The CWT of the input time series.
+    """
+
     if missing_data:
         x = reweight(x)
         
@@ -16,7 +32,7 @@ def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, bc: str = "peri
         x = spacing_function(x, times, min_spacing)
     
     if bc == "periodic":
-        return cwt_periodic(x, Wavelet, sampling_rate)
+        return cwt_periodic_or_constant(x, Wavelet, mode="wrap", sampling_rate=sampling_rate)
     
     elif bc == "symmetric":
         return cwt_symmetric(x, Wavelet, sampling_rate)
@@ -25,90 +41,55 @@ def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: int = 1, bc: str = "peri
         return cwt_zero(x, Wavelet, sampling_rate)
     
     elif bc == "constant":
-        return cwt_constant(x, Wavelet, sampling_rate)
+        return cwt_periodic_or_constant(x, Wavelet, mode="clip", sampling_rate=sampling_rate)
     
     else:
         raise TypeError("""Invalid boundary condition: {bc}. Available options:\n 
                         symmetric, periodic, constant or zero.""".format(bc=bc))
     
-
-
 # ================================================================================================
-# Continuous Wavelet Transform - Zero Padding
+# Continuous Wavelet Transform - Periodic or Constant Boundary
 # ================================================================================================
 
-def cwt_zero(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
+
+def cwt_periodic_or_constant(x: np.ndarray, Wavelet: Wavelet, mode: str, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
     """
-    Computes the continuous wavelet transform (CWT) using zero padding at the boundaries.
+    Computes the continuous wavelet transform (CWT) using periodic or constant boundary conditions.
 
     Args:
         x (np.ndarray): The input signal.
         Wavelet (np.ndarray): The wavelet to be used for the CWT.
+        mode (str): {"wrap", "clip"}. Specifies how out-of-bounds indices will behave. "wrap" for periodic and "clip" for constant.
         sampling_rate (float, optional): The sampling rate of the input signal. Defaults to 1.
         alpha (float, optional): The shift parameter. Defaults to 0.
 
     Returns:
         np.ndarray: The CWT coefficients.
     """
-    
+    # Extract scales
     scales = Wavelet.scales
+    # Initialise array of coefficients
     n = len(x)
-    c = np.empty([len(scales), n])
-     
-    a = int(np.ceil(n / 2))
-    b = int(np.floor(n / 2))
-    
+    c = np.zeros([len(scales), n])
+    # Points at which to sample the wavelet for each scale
     lower, upper, n_points = Wavelet.wavelet_filter(sampling_rate)
     
     for i,scale in enumerate(scales):
         lb, ub, m = lower[i], upper[i], n_points[i]
-        W_i = Wavelet.wavelet(np.linspace(lb, ub, m), scale)
-        if m > n:
-            k1 = np.round(m / 2 - a).astype(int)
-            k2 = np.round(m / 2 + b).astype(int)
-            W_i = W_i[k1:k2]
-        
-        c[i] = np.convolve(W_i, x, "same")
-    
-    return c / sampling_rate
-
-
-# ================================================================================================
-# Continuous Wavelet Transform - Period Boundary
-# ================================================================================================
-
-
-def cwt_periodic(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
-    """
-    Computes the continuous wavelet transform (CWT) using periodic boundary conditions.
-
-    Args:
-        x (np.ndarray): The input signal.
-        Wavelet (np.ndarray): The wavelet to be used for the CWT.
-        sampling_rate (float, optional): The sampling rate of the input signal. Defaults to 1.
-        alpha (float, optional): The shift parameter. Defaults to 0.
-
-    Returns:
-        np.ndarray: The CWT coefficients.
-    """
-    scales = Wavelet.scales
-    n = len(x)
-    c = np.empty([len(scales), n])
-    
-    lower, upper, n_points = Wavelet.wavelet_filter(sampling_rate)
-    
-    for i,scale in enumerate(scales):
-        lb, ub, m = lower[i], upper[i], n_points[i]
+        # If the number of points is less than or equal to 1, skip the iteration
+        if m <= 1:
+            continue
+        # Enforce boundary condtions
         k = (m - 1) / 2
         if k != 0:
             a = int(np.ceil(k))
             b = int(np.floor(k))
-            x_i = x.take(range(-a, n+b), mode="wrap")
+            x_i = x.take(range(-a, n+b), mode=mode)
         else: 
             x_i = x
+        # Sample wavelet and compute CWT
         W_i = Wavelet.wavelet(np.linspace(lb, ub, m), scale)
-        c_i = np.convolve(W_i, x_i, "valid")
-        c[i] = c_i
+        c[i] = np.convolve(W_i, x_i, "valid")
     
     return c / sampling_rate
 
@@ -130,40 +111,42 @@ def cwt_symmetric(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alp
     Returns:
         np.ndarray: The CWT coefficients.
     """
+    # Extract scales
     scales = Wavelet.scales
-    s = len(scales)
+    # Initialise array of coefficients
     n = len(x)
-    c = np.empty([s,n])
-    
+    c = np.empty([len(scales), n])
+    # Points at which to sample the wavelet for each scale
     lower, upper, n_points = Wavelet.wavelet_filter(sampling_rate)
-    x_original = x
-    x = np.hstack([x[::-1], x, x[::-1]])
+    # Extend the time series symmetrically
+    x = np.hstack([x, x[::-1]])
     
     for i,scale in enumerate(scales):
         lb, ub, m = lower[i], upper[i], n_points[i]
-        if m > 0:
-            k = (m - 1) / 2
-            if k != 0:
-                a = int(np.ceil(k))
-                b = int(np.floor(k))
-                x_i = x.take(range(n-a, 2*n+b), mode="wrap")
-            else: 
-                x_i = x_original
-            W_i = Wavelet.wavelet(np.linspace(lb, ub, m) + alpha, scale)
-            c_i = np.convolve(W_i, x_i, "valid")
-            c[i] = c_i
+        # If the number of points is less than or equal to 1, skip the iteration
+        if m <= 1:
+            continue
+        # Enforce symmetric boundary conditions
+        k = (m - 1) / 2
+        if k != 0:
+            a = int(np.ceil(k))
+            b = int(np.floor(k))
+            x_i = x.take(range(-a, n+b), mode="wrap")
+        else: 
+            x_i = x[:n]
+        # Sample wavelet and compute CWT
+        W_i = Wavelet.wavelet(np.linspace(lb, ub, m) + alpha, scale)
+        c[i] = np.convolve(W_i, x_i, "valid")
             
     return c / sampling_rate
 
-
 # ================================================================================================
-# Continuous Wavelet Transform - Constant Boundary
+# Continuous Wavelet Transform - Zero Padding
 # ================================================================================================
 
-
-def cwt_constant(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
+def cwt_zero(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: float = 0) -> np.ndarray:
     """
-    Computes the continuous wavelet transform (CWT) using constant values at the boundaries.
+    Computes the continuous wavelet transform (CWT) using zero padding at the boundaries.
 
     Args:
         x (np.ndarray): The input signal.
@@ -174,116 +157,63 @@ def cwt_constant(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alph
     Returns:
         np.ndarray: The CWT coefficients.
     """
+    # Extract scales
     scales = Wavelet.scales
-    s = len(scales)
+    # Initialise array of coefficients
     n = len(x)
-    c = np.empty([s,n])
-    
-    delta = 1 / sampling_rate
-    
+    c = np.empty([len(scales), n])
+    # 
+    a = int(np.ceil(n / 2))
+    b = int(np.floor(n / 2))
+    # Points at which to sample the wavelet for each scale
     lower, upper, n_points = Wavelet.wavelet_filter(sampling_rate)
-    x_l = x[0]
-    x_r = x[-1]
     
     for i,scale in enumerate(scales):
         lb, ub, m = lower[i], upper[i], n_points[i]
-        k = (m - 1) / 2
-        if k != 0:
-            a = int(np.ceil(k))
-            b = int(np.floor(k))
-            x_i = np.hstack([np.array([x_l] * a), x, np.array([x_r] * b)])
-        else: 
-            x_i = x
+        # Sample wavelet
         W_i = Wavelet.wavelet(np.linspace(lb, ub, m), scale)
-        c_i = np.convolve(W_i, x_i, "valid")
-        c[i] = c_i
+        # Trim wavelet if its wider than the time series
+        if m > n:
+            k1 = np.round(m / 2 - a).astype(int)
+            k2 = np.round(m / 2 + b).astype(int)
+            W_i = W_i[k1:k2]
+        # Compute CWT
+        c[i] = np.convolve(W_i, x, "same")
     
-    return c * delta
-
-
+    return c / sampling_rate
 
 # ================================================================================================
 # Reweighting and Spacing Functions
 # ================================================================================================
 
 def reweight(x):
+    """
+    Reweights the values in the input array based on the number of NaNs nearby.
     
-    is_nan = np.isnan(x)
-    while(is_nan[0]):
-        x = x[1:]
-        is_nan = is_nan[1:]
+    This function is used for computing integrals (specifically for the CWT) when values are missing. It assigns weights to each value in the array based on the number of NaNs nearby. NaNs are then replaced by zeros, allowing for a more efficient CWT computation.
     
-    idx = np.where(is_nan)[0]
-    weights = np.ones_like(x)
-    for i,j in enumerate(idx):
-        if j - 1 not in idx:
-            if j + 1 not in idx:
-                weights[j - 1] += 1/2
-                weights[j + 1] += 1/2
-            else:
-                mj = j
-                count = 1
-        else:
-            count += 1
-            if j + 1 not in idx:
-                weights[mj - 1] += count/2
-                weights[j + 1] += count/2
+    Parameters:
+    x (ndarray): Input array containing NaNs.
     
-    x[idx] = 0
-    x = x * weights
-    
-    return x
+    Returns:
+    ndarray: The reweighted array, with NaNs replaced by zeros.
+    """
+    idx = ~np.isnan(x)
+    x[~idx] = 0
+    x = np.trim_zeros(x)
+    idx = np.trim_zeros(idx)
+    weights = idx.copy().astype(float)
+    t = np.arange(0, len(x))[idx]
+    weights[idx] += np.convolve((t[1:] - t[:-1] - 1) / 2, np.array([1, 1]))
+    return x * weights
 
 
 def spacing_function(x, times, min_spacing):
-    
     times = ((times - np.min(times)) / min_spacing).astype(int)
     t = np.linspace(0, np.max(times), int(np.max(times)) + 1)
-    y = np.zeros_like(t)
-    y[:] = np.nan
+    y = np.ones_like(t) * np.nan
     y[times] = x
-
     return reweight(y)
-
-
-
-
-# ================================================================================================
-# Continuous Wavelet Transform with Irregularly Spaced Data
-# ================================================================================================
-
-def cwt_periodic_i(x, t, Wavelet, dv=None):
-    
-    s = len(Wavelet.scales)
-    n = len(x)
-    
-    t = t - t[0]
-    
-    if dv == None:
-        dv = np.mean(t[1:] - t[:-1])
-        
-    m = int((np.max(t) - np.min(t)) / dv)
-    c = np.zeros([s, m])
-    
-    sampling_rate = t[-1] / np.mean(t[1:] - t[:-1])
-    
-    N = int(min(np.max(Wavelet.scales) * sampling_rate, n//2))
-    x = np.hstack([x[-N:-1], x, x[1:N]])
-    t = np.hstack([t[-N:-1] - t[-1], t, t[1:N] + t[-1]])
-    
-    dt = np.hstack([t[1], (t[2:] - t[:-2]) / 2, t[-1] - t[-2]])
-    
-    xdt = x * dt
-    
-    for i in range(m):
-        if i%100 == 0:
-            print(".", end=" ")
-        W = Wavelet.wavelet(i * dv - t)
-        c_i = W @ xdt
-        c[:,i] = c_i
-    
-    return c
-    
  
 # ================================================================================================
 # Continuous Wavelet Transform with Arbitrary Shifts
