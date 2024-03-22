@@ -15,18 +15,15 @@ h = Haar(s)
 I2 = cwt_arbitrary_shifts(x, h, dv=0.2)
 
 # %%
-c.compute_ews(0.01, n_iter=10000)
+c.compute_ews(0.01, n_iter=100)
 # %%
 c.view_ews()
 # %%
-from plotting import view
+c.view_A()
 
 # %%
-view(I, s, 1)
+import matplotlib.pyplot as plt
+plt.imshow(I, aspect="equal")
+
 # %%
-view(I2, s, 1)
-# %%
-I3 = cwt_arbitrary_shifts(x, h, dv=1)
-# %%
-view(I3, s, 1)
-# %%
+

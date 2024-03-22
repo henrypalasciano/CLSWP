@@ -2,24 +2,22 @@ import numpy as np
 from wavelets import Wavelet
 
 def local_autocovariance(S: np.ndarray, Wavelet: Wavelet, tau: np.ndarray) -> np.ndarray:
-    
     """
-    Compute the local autocovariance given the spectrum.
+    Compute the local autocovariance of a time series given its spectrum.
     
     Args:
         S (np.ndarray): Evolutionary wavelet spectrum
-        Wavelet (Wavelet): Wavelet used
+        Wavelet (Wavelet): Wavelet to use. This is an instance of the Wavelet class, with the desired scales
         tau (np.ndarray): Time lags of interest
         
     Returns:
         np.ndarray: Local autocovariance
     """
+    # Get scales and autocorrelation wavelet
     scales = Wavelet.scales
     Psi = Wavelet.autocorrelation_wavelet(tau).T
-    
-    acf = (scales[1] - scales[0]) * Psi @ S
-    
-    return acf
+    # Compute the local autocovariance
+    return (scales[1] - scales[0]) * Psi @ S
 
 
 def local_autocorrelation(acf: np.ndarray) -> np.ndarray:
@@ -33,18 +31,9 @@ def local_autocorrelation(acf: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: Local autocorrelation
     """
-    
-    ac =  acf / np.max(acf, axis=0)
-    
-    nan_idx = np.where(np.isnan(ac[0]))[0]
-    if len(nan_idx) > 0:
-        if nan_idx[0] == 0:
-            for idx in nan_idx[::-1]:
-                ac[:,idx] = ac[:,idx+1]
-        else:
-            for idx in nan_idx:
-                ac[:,idx] = ac[:,idx-1]
-    
-    #ac[:, np.isnan(ac[0])] = np.min(ac[:,~np.isnan(ac[0])], axis=1).reshape(-1,1)
-    
-    return ac
+    # Compute the maximum values of the local autocovariance
+    max_vals = np.max(acf, axis=0)
+    # Avoid division by zero
+    max_vals[max_vals == 0] = 1
+    # Compute the local autocorrelation
+    return  acf / max_vals

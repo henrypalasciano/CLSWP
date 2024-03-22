@@ -111,10 +111,11 @@ class CLSWP():
         
     def view_A(self):
         """ View the inner product kernel. """
-        view(self.A, self.scales, which=0, title=self.Wavelet.name + " Inner Product Kernel")
+        view(self.A, self.scales, self.scales, title=self.Wavelet.name + " Inner Product Kernel",
+             x_label="Scale", y_label="Scale")
     
     
-    def view_ews(self, sqrt=False, log=False, index=-1):
+    def view_ews(self, index=-1):
         """
         View the evolutionary wavelet spectrum.
         
@@ -123,13 +124,8 @@ class CLSWP():
             log (bool): Whether to take the log transform of the spectrum.
             index (int): Index of the spectrum to view.
         """
-        if sqrt:
-            view(np.sqrt(self.S[index]), self.scales, which=1)
-        elif log:
-            view(np.log(self.S[index] + 0.0001), self.scales, which=1)
-        else:
-            view(self.S[index], self.scales, which=1)
-        
+        view(np.log(self.S[index] + 0.0001), np.arange(0, len(self.x)), self.scales,
+             title="Evolutionary Wavelet Spectrum", x_label="Time", y_label="Scale")    
         
     def view_local_autocov(self, index=-1):
         """
@@ -138,7 +134,8 @@ class CLSWP():
         Args:
             index (int): Index of the local autocovariance to view.
         """
-        view(self.local_autocov[index], self.tau[index][1], which=2)
+        view(self.local_autocov[index], np.arange(0, len(self.x)), self.tau[index][1],
+             title="Local Autocovariance", x_label="Time", y_label="Lag")
         
     def view_local_autocorr(self, index=-1):
         """
@@ -147,7 +144,8 @@ class CLSWP():
         Args:
             index (int): Index of the local autocorrelation to view.
         """
-        view(self.local_autocorr[index], self.tau[index][1], which=2)
+        view(self.local_autocov[index], np.arange(0, len(self.x)), self.tau[index][1],
+             title="Local Autocorrelation", x_label="Time", y_label="Lag")
         
         
         
