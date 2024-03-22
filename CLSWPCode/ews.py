@@ -28,7 +28,6 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
     """
     # Compute the raw wavelets periodogram and rescale by delta
     I = c ** 2 / (scales[1] - scales[0])
-    
     # Smooth the raw wavelet periodogram
     if smooth:
         I = smoothing(I, wavelet=wavelet, by_level=by_level)
@@ -36,10 +35,8 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
     # Compute the Evolutionary Wavelet Spectrum using one of the specified methods
     if method == "Daubechies_Iter_Asymmetric":
         S = daub_inv_iter_asym(I, A, mu, n_iter)
-    
     elif method == "Tikhonov":
         S = tikhonov(I, A, mu)
-    
     elif method == "Lasso":
         S = lasso(I, A, mu)
 

@@ -15,7 +15,6 @@ def smoothing(I, wavelet="db10", by_level=True):
     """
     # Calculate the dimensions of the input array
     (m, n) = np.shape(I)
-
     # Decompose the input array using wavelet transform
     coeffs = pywt.wavedec(I, wavelet, axis=1)
     coeffs_stacked = np.hstack(coeffs[1:])
@@ -33,9 +32,6 @@ def smoothing(I, wavelet="db10", by_level=True):
     for i,c in enumerate(coeffs[1:]):
         c[np.abs(c) <= t] = 0
         coeffs[i+1] = c
-
-    # Reconstruct the smoothed wavelet periodogram
-    I = pywt.waverec(coeffs, wavelet, axis=1)
-
+        
     # Return the smoothed wavelet periodogram
-    return I
+    return pywt.waverec(coeffs, wavelet, axis=1)
