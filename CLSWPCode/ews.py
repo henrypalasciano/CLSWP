@@ -46,9 +46,9 @@ def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
 # Regularisation Methods
 # ===================================
 
-def daub_inv_iter_asym(y, A, mu, n_iter):
+def daub_inv_iter_asym(y: np.ndarray, A: np.ndarray, mu: float, n_iter: int) -> np.ndarray:
     """
-    Daubechies Iterative Scheme with Asymmetric Regularisation.
+    Daubechies Iterative Scheme with Asymmetric Regularisation as adapted from https://arxiv.org/abs/math/0307152.
 
     Args:
         y (ndarray): Raw wavelet periodogram.
@@ -78,9 +78,7 @@ def daub_inv_iter_asym(y, A, mu, n_iter):
 
 def tikhonov(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
     """
-    Tikhonov regularization.
-
-    This function solves the equation y = Ax using Tikhonov regularization.
+    Tikhonov regularisation as defined in https://arxiv.org/abs/math/0307152.
     
     Args:
         y (np.ndarray): The vector or matrix y = Ax.
@@ -96,20 +94,42 @@ def tikhonov(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
     # Return (mu I + A^2)^-1 A y
     return B @ A @ y
 
-def lasso(y, A, mu):    
+def lasso(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
+    """
+    Lasso regularisation as defined in https://arxiv.org/abs/math/0307152.
+
+    Args:
+        y (np.ndarray): The vector or matrix y = Ax.
+        A (np.ndarray): The matrix operator.
+        mu (float): The regularization parameter.
+
+    Returns:
+        np.ndarray: The solution x of y = Ax.
+    """  
+    # Compute the eigenvalues and eigenvectors of A
     eig, ev = np.linalg.eig(A)
     eig = eig.reshape(-1,1)
+    # Compute the coefficients of the solution
     coeffs = threshold(ev.T @ y * eig, mu) / (eig ** 2)
     coeffs = coeffs.T
     ev = np.array([ev.T])
+    # Compute the solution
     x = coeffs @ ev
-    
     return x[0].T
 
-def threshold(x, mu):
+def threshold(x: np.ndarray, mu: float) -> np.ndarray:
+    """
+    Soft thresholding function.
+
+    Args:
+        x (np.ndarray): Input array.
+        mu (float): Threshold.
     
+    Returns:
+        np.ndarray: Soft thresholded array.
+    """
+    # Apply soft thresholding to the input array
     x[np.abs(x) < mu / 2] = 0 
     x[x >= mu / 2] -= mu / 2
     x[x <= - mu / 2] += mu / 2
-    
     return x
