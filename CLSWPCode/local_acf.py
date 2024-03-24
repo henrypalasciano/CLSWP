@@ -21,7 +21,6 @@ def local_autocovariance(S: np.ndarray, Wavelet: Wavelet, tau: np.ndarray) -> np
 
 
 def local_autocorrelation(acf: np.ndarray) -> np.ndarray:
-    
     """
     Compute local autocorrelation from local autocovariance.
 

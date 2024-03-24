@@ -1,29 +1,31 @@
 # %%
 import numpy as np
-from CLSWP_Object import CLSWP
+from CLSWP_Object import CLSWP, CLSWP_missing_data
 from wavelets import Haar
-from cwt import cwt_arbitrary_shifts
-
+# %%
 x = np.random.randn(3000)
+y = np.random.choice(np.arange(1, 3000), 500, replace=False)
+x[y] = np.nan
 s = np.linspace(5, 200, 196)
 
 # %%
-c = CLSWP(x, Haar, s)
+c = CLSWP_missing_data(x, Haar, s)
 I = c.coeffs
 h = Haar(s)
-#%%
-I2 = cwt_arbitrary_shifts(x, h, dv=0.2)
 
 # %%
 c.compute_ews(0.01, n_iter=100)
 # %%
-c.view_ews()
+c.plot("Evolutionary Wavelet Spectrum")
 # %%
-c.view_A()
+c.plot("Inner Product Kernel")
 
 # %%
-import matplotlib.pyplot as plt
-plt.imshow(I, aspect="equal")
+c.compute_local_acf(np.arange(0, 100))
 
 # %%
+c.plot("Local Autocovariance")
 
+# %%
+c.plot("Local Autocorrelation")
+# %%

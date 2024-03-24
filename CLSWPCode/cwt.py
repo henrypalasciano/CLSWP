@@ -5,9 +5,7 @@ from wavelets import Wavelet
 # Continuous Wavelet Transform
 # ================================================================================================
 
-def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, bc: str = "periodic",
-        missing_data: bool = False, irregularly_spaced: bool = False, 
-        times: np.array = None, min_spacing: float = None, alpha: float = 0) -> np.ndarray:
+def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, bc: str = "periodic", alpha: float = 0) -> np.ndarray:
     """
     Computes the Continuous Wavelet Transform (CWT) of a given time series.
 
@@ -17,18 +15,10 @@ def cwt(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, bc: str = "pe
         sampling_rate (int): The sampling rate of the signal. Default is 1.
         bc (str): The boundary condition to be used. Available options are "periodic", "symmetric", "zero", and "constant". Default is "periodic".
         missing_data (bool): Whether the time series contains missing data. Default is False. Set to False if irregularly_spaced is True.
-        irregularly_spaced (bool): Whether the time series is irregularly spaced. Default is False. Set to False if missing_data is True.
-        times (np.array): The corresponding times for the series. Required if irregularly_spaced is True.
-        min_spacing (float): The minimum spacing between any two observations. Required if irregularly_spaced is True.
-        alpha (float): The shift parameter. Default is 0.
 
     Returns:
         np.ndarray: The CWT of the input time series.
     """
-    if missing_data:
-        x = reweight(x)
-    elif irregularly_spaced:
-        x = spacing_function(x, times, min_spacing)
     
     if bc == "periodic":
         return cwt_periodic_or_constant(x, Wavelet, mode="wrap", sampling_rate=sampling_rate, alpha=alpha)
@@ -230,9 +220,7 @@ def spacing_function(x, times, min_spacing):
 # Continuous Wavelet Transform with Arbitrary Shifts
 # ================================================================================================
 
-def cwt_arbitrary_shifts(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, dv: float = 1,
-                         bc: str = "periodic", missing_data: bool = False, irregularly_spaced: bool = False, 
-                         times: np.array = None, min_spacing: float = None) -> np.ndarray:
+def cwt_arbitrary_shifts(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, dv: float = 1, bc: str = "periodic") -> np.ndarray:
     """
     Computes the continuous wavelet transform for arbitrary shifts of the wavelet, rather than restricting this to one.
 
@@ -242,18 +230,10 @@ def cwt_arbitrary_shifts(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float =
         sampling_rate (float): The sampling rate of the signal. Default is 1.
         dv (float): The step size for the arbitrary shifts. Default is 1.
         bc (str): The boundary condition to be used. Available options are "periodic", "symmetric", "zero", and "constant". Default is "periodic".
-        missing_data (bool): Whether the time series contains missing data. Default is False. Set to False if irregularly_spaced is True.
-        irregularly_spaced (bool): Whether the time series is irregularly spaced. Default is False. Set to False if missing_data is True.
-        times (np.array): The corresponding times for the series. Required if irregularly_spaced is True.
-        min_spacing (float): The minimum spacing between any two observations. Required if irregularly_spaced is True.
-
+        
     Returns:
         np.ndarray: The continuous wavelet transform of the input time series.
     """
-    if missing_data:
-        x = reweight(x)
-    elif irregularly_spaced:
-        x = spacing_function(x, times, min_spacing)
     # Calculate the number of shifts between any two consecutive observations
     k = sampling_rate / dv
     if k == 1: # Return the standard CWT
