@@ -146,7 +146,7 @@ class CLSWPMissingData(CLSWP):
     
 class CLSWPIrregularlySpacedData(CLSWP):
     def __init__(self, ts: np.ndarray, Wavelet: Wavelet, scales: np.ndarray,
-                     times: np.ndarray, min_spacing: float, sampling_rate: float = 1, 
+                     times: np.ndarray, sampling_rate: float, 
                      bc: str = "symmetric") -> None:
             """
             Initialize the CLSWP_Object for irregularly spaced data.
@@ -156,28 +156,27 @@ class CLSWPIrregularlySpacedData(CLSWP):
             Wavelet (Wavelet): The wavelet object.
             scales (np.ndarray): The scales for the wavelet transform.
             times (np.ndarray): The times corresponding to the observations.
-            min_spacing (float): The minimum spacing between any two observations.
-            sampling_rate (float, optional): The sampling rate of the time series data. Defaults to 1.
+            sampling_rate (float, optional): The sampling rate of the time series data. For irregularly spaced data, this is the spacing between observations for the corresponding time series with equally spaced observations.
             bc (str, optional): The boundary condition for the wavelet transform. Defaults to "symmetric".
             """
-            ts = self.spacing_function(ts, times, min_spacing)
-            super().__init__(ts, Wavelet, scales, sampling_rate, bc)
+            ts = self.spacing_function(ts, times, sampling_rate)
+            super().__init__(ts, Wavelet, scales, 1, bc)
 
     @staticmethod
-    def spacing_function(x, times, min_spacing):
+    def spacing_function(x, times, sampling_rate):
         """
         Converts irregularly spaced data to regularly spaced data by adding zeros in between observations and reweighting the time series based on the distance to neighbouring points.
 
         Args:
             x (np.ndarray): The input time series.
             times (np.ndarray): The corresponding times.
-            min_spacing (float): The minimum spacing between any two observations.
+            sampling_rate (float): The sampling rate of the time series data. For irregularly spaced data, this is the spacing between observations for the corresponding time series with equally spaced observations.
 
         Returns:
             np.ndarray: The regularly spaced data, reweighted based on the distance to neighbouring points and with zeros at the missing locations.
         """
         # Rescale times, so that the first observation is at time 0 and the minimum spacing between any two observations is one
-        times = ((times - np.min(times)) / min_spacing).astype(int)
+        times = ((times - times[0]) / sampling_rate).astype(int)
         # Create a new array with NaNs at the missing locations
         y = np.zeros(times[-1] + 1)
         y[times] = (1 + np.convolve((times[1:] - times[:-1] - 1) / 2, np.array([1, 1]))) * x
