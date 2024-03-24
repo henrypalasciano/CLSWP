@@ -1,6 +1,6 @@
 # %%
 import numpy as np
-from CLSWP_Object import CLSWP, CLSWP_missing_data
+from CLSWPCode.CLSWP import CLSWP, CLSWP_missing_data
 from wavelets import Haar
 # %%
 x = np.random.randn(3000)
