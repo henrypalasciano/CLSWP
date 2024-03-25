@@ -64,8 +64,8 @@ def daub_inv_iter_asym(y: np.ndarray, A: np.ndarray, mu: float, n_iter: int) -> 
     # Normalize the inner product matrix A by dividing it by the largest eigenvalue
     e = np.real(np.linalg.eig(A)[0][0])
     A = A / e
-    # Compute A @ y - mu / 2 and A @ A
-    A_y = A @ y - mu / 2
+    # Compute A @ y - mu and A @ A
+    A_y = A @ y - mu
     A_2 = A @ A
     
     # Perform the iterative scheme for n_iter iterations

@@ -1,7 +1,7 @@
 # Continuous Time Locally Stationary Wavelet Processes
 ## Author: Henry Antonio Palasciano
 
-Functions to compute the continuous wavelet transform and evolutionary wavelet transform for a given time series.
+Functions to compute the continuous wavelet transform, evolutionary wavelet spectrum and local autocovariance and autocorrelation for a given time series.
 
 Contents:
 * wavelets.py - wavelet objects. Available wavelets: Haar, Ricker, Shannon;

@@ -166,55 +166,6 @@ def cwt_zero(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float = 1, alpha: f
         c[i] = np.convolve(W_i, x, "same")
     
     return c / sampling_rate
-
-# ================================================================================================
-# Reweighting and Spacing Functions
-# ================================================================================================
-
-def reweight(x):
-    """
-    Reweights the values in the input array based on the number of NaNs nearby.
-    This function is used for computing integrals (specifically for the CWT) when values are missing. It assigns weights to each value in the array based on the number of NaNs nearby. NaNs are then replaced by zeros, allowing for a more efficient CWT computation.
-    
-    Args:
-        x (ndarray): Input array containing NaNs.
-    
-    Returns:
-        np.ndarray: The reweighted array, with NaNs replaced by zeros.
-    """
-    # Find NaNs
-    idx = ~np.isnan(x)
-    x[~idx] = 0
-    # Remove leading and trailing NaNs
-    x = np.trim_zeros(x)
-    idx = np.trim_zeros(idx)
-    # Initialise weights
-    weights = idx.copy().astype(float)
-    t = np.arange(0, len(x))[idx]
-    # Adjust weights based on the spacing between valid observations
-    weights[idx] += np.convolve((t[1:] - t[:-1] - 1) / 2, np.array([1, 1]))
-    # Reweight the data accordingly
-    return x * weights
-
-def spacing_function(x, times, min_spacing):
-    """
-    Converts irregularly spaced data to regularly spaced data with NaNs in the missing points. Then reweights the data to compute the integrals for the CWT.
-
-    Args:
-        x (np.ndarray): The input time series.
-        times (np.ndarray): The corresponding times.
-        min_spacing (float): The minimum spacing between any two observations.
-
-    Returns:
-        np.ndarray: The regularly spaced data, reweighted based on the distance to neighbouring points and with zeros at the missing locations.
-    """
-    # Rescale times, so that the first observation is at time 0 and the minimum spacing between any two observations is one
-    times = ((times - np.min(times)) / min_spacing).astype(int)
-    # Create a new array with NaNs at the missing locations
-    y = np.ones(times[-1] + 1) * np.nan
-    y[times] = x
-    # Reweight the time series
-    return reweight(y)
  
 # ================================================================================================
 # Continuous Wavelet Transform with Arbitrary Shifts

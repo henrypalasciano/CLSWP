@@ -20,6 +20,8 @@ class CLSWP():
         bc (str): The boundary condition for the continuous wavelet transform.
         coeffs (np.ndarray): The continuous wavelet transform coefficients.
         A (np.ndarray): The inner product kernel.
+        regular (bool): Whether the ews and other estimates lie on a regularly spaced grid. Required for the plotting function.
+        times (np.ndarray): The times at which the observations are made.
         estimates (list): List of dictionaries containing computed estimates with different parameters.
 
     Methods:
@@ -46,6 +48,11 @@ class CLSWP():
         self.coeffs = cwt(ts, self.Wavelet, sampling_rate=sampling_rate, bc=bc)
         # Compute the inner product kernel
         self.A = self.Wavelet.inner_product_kernel()
+        # Whether the ews and other estimates lie on a regularly spaced grid. Required for the plotting function in the child classes.
+        self.regular = True
+        # The times at which the observations are made
+        self.times = np.arange(0, len(self.ts)) * sampling_rate
+        # List of dictionaries containing computed estimates with different parameters
         self.estimates = []
         
     def compute_ews(self, mu: float, method: str = "Daubechies_Iter_Asymmetric", n_iter: int = 100, 
@@ -88,23 +95,23 @@ class CLSWP():
             index (int, optional): The index of the estimate to use. Defaults to -1.
         """
         if qty == "Inner Product Kernel":
-            view(self.A, self.scales, self.scales, title=self.Wavelet.name + " Inner Product Kernel",
+            view(self.A, self.scales, self.scales, regular=True, title=self.Wavelet.name + " Inner Product Kernel",
                  x_label="Scale", y_label="Scale")
         elif qty == "Evolutionary Wavelet Spectrum":
-            view(np.log(self.estimates[index]["ews"] + 0.0001), np.arange(0, len(self.ts)), self.scales,
+            view(np.log(self.estimates[index]["ews"] + 0.0001), self.times, self.scales, regular=self.regular,
                  title="Evolutionary Wavelet Spectrum", x_label="Time", y_label="Scale")
         elif qty == "Local Autocovariance":
-            view(self.estimates[index]["local_autocov"], np.arange(0, len(self.ts)), self.estimates[index]["tau"],
-                 title="Local Autocovariance", x_label="Time", y_label="Lag")
+            view(self.estimates[index]["local_autocov"], self.times, self.estimates[index]["tau"],
+                 regular=self.regular, title="Local Autocovariance", x_label="Time", y_label="Lag")
         elif qty == "Local Autocorrelation":
-            view(self.estimates[index]["local_autocorr"], np.arange(0, len(self.ts)), self.estimates[index]["tau"],
-                 title="Local Autocorrelation", x_label="Time", y_label="Lag")
+            view(self.estimates[index]["local_autocorr"], self.times, self.estimates[index]["tau"],
+                 regular=self.regular, title="Local Autocorrelation", x_label="Time", y_label="Lag")
         else:
             raise ValueError("Invalid argument for qty.")
         
 class CLSWPMissingData(CLSWP):    
-    def __init__(self, ts: np.ndarray, Wavelet: Wavelet, scales: np.ndarray, 
-                 sampling_rate: float = 1, bc: str = "symmetric") -> None:
+    def __init__(self, ts: np.ndarray, Wavelet: Wavelet, scales: np.ndarray, sampling_rate: float = 1, 
+                 bc: str = "symmetric", keep_all: bool = True) -> None:
         """
         Initialize the CLSWP_Object for time series containing missing observations.
 
@@ -114,9 +121,17 @@ class CLSWPMissingData(CLSWP):
         scales (np.ndarray): The scales for wavelet decomposition.
         sampling_rate (float, optional): The sampling rate of the time series. Defaults to 1.
         bc (str, optional): The boundary condition for wavelet decomposition. Defaults to "symmetric".
+        keep_all (bool, optional): Whether to keep all coefficients or only the ones corresponding to non-missing values. Defaults to True.
         """
-        ts = self.reweight(ts)
+        ts, times = self.reweight(ts)
         super().__init__(ts, Wavelet, scales, sampling_rate, bc)
+        self.regular = keep_all
+        if keep_all:
+            self.times = np.arange(0, len(ts)) * sampling_rate
+        else:
+            # Keep only the coefficients corresponding to non-missing values
+            self.times = times * sampling_rate
+            self.coeffs = self.coeffs[:, times]
 
     @staticmethod
     def reweight(x):
@@ -128,7 +143,9 @@ class CLSWPMissingData(CLSWP):
             x (ndarray): Input array containing NaNs.
         
         Returns:
-            np.ndarray: The reweighted array, with NaNs replaced by zeros.
+            tuple: A tuple containing:
+                np.ndarray: The reweighted array, with NaNs replaced by zeros.
+                np.ndarray: The array of indices of the valid observations in the input array.
         """
         # Find NaNs
         idx = ~np.isnan(x)
@@ -138,16 +155,15 @@ class CLSWPMissingData(CLSWP):
         idx = np.trim_zeros(idx)
         # Initialise weights
         weights = idx.copy().astype(float)
-        t = np.arange(0, len(x))[idx]
+        times = np.arange(0, len(x))[idx]
         # Adjust weights based on the spacing between valid observations
-        weights[idx] += np.convolve((t[1:] - t[:-1] - 1) / 2, np.array([1, 1]))
+        weights[idx] += np.convolve((times[1:] - times[:-1] - 1) / 2, np.array([1, 1]))
         # Reweight the data accordingly
-        return x * weights
+        return x * weights, times
     
 class CLSWPIrregularlySpacedData(CLSWP):
-    def __init__(self, ts: np.ndarray, Wavelet: Wavelet, scales: np.ndarray,
-                     times: np.ndarray, sampling_rate: float, 
-                     bc: str = "symmetric") -> None:
+    def __init__(self, ts: np.ndarray, Wavelet: Wavelet, scales: np.ndarray, times: np.ndarray, 
+                 sampling_rate: float, bc: str = "symmetric", keep_all: bool = True) -> None:
             """
             Initialize the CLSWP_Object for irregularly spaced data.
 
@@ -156,11 +172,19 @@ class CLSWPIrregularlySpacedData(CLSWP):
             Wavelet (Wavelet): The wavelet object.
             scales (np.ndarray): The scales for the wavelet transform.
             times (np.ndarray): The times corresponding to the observations.
-            sampling_rate (float, optional): The sampling rate of the time series data. For irregularly spaced data, this is the spacing between observations for the corresponding time series with equally spaced observations.
+            sampling_rate (float): The sampling rate of the time series data. For irregularly spaced data, this is the spacing between observations for the corresponding time series with equally spaced observations.
             bc (str, optional): The boundary condition for the wavelet transform. Defaults to "symmetric".
+            keep_all (bool, optional): Whether to keep all coefficients or only the ones corresponding to non-missing values. Defaults to True.
             """
-            ts = self.spacing_function(ts, times, sampling_rate)
+            ts, t_idx = self.spacing_function(ts, times, sampling_rate)
             super().__init__(ts, Wavelet, scales, 1, bc)
+            self.regular = keep_all
+            if keep_all:
+                self.times = np.arange(0, len(ts)) * sampling_rate
+            else:
+                # Keep only the coefficients corresponding to non-missing values
+                self.times = times
+                self.coeffs = self.coeffs[:, t_idx]
 
     @staticmethod
     def spacing_function(x, times, sampling_rate):
@@ -181,4 +205,4 @@ class CLSWPIrregularlySpacedData(CLSWP):
         y = np.zeros(times[-1] + 1)
         y[times] = (1 + np.convolve((times[1:] - times[:-1] - 1) / 2, np.array([1, 1]))) * x
         # Reweight the time series
-        return y
+        return y, times
