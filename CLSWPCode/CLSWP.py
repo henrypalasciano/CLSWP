@@ -85,7 +85,7 @@ class CLSWP():
         self.estimates[index]["local_autocorr"] = local_autocorrelation(acf)
         self.estimates[index]["tau"] = tau
         
-    def plot(self, qty: str, index: int = -1) -> None:
+    def plot(self, qty: str, index: int = -1, num_x: int = 5, num_y: int = 5) -> None:
         """
         Plot various quantities related to the CLSWP object.
 
@@ -93,19 +93,21 @@ class CLSWP():
             qty (str): The quantity to plot. Valid values are "Inner Product Kernel", "Evolutionary Wavelet Spectrum",
                        "Local Autocovariance", and "Local Autocorrelation".
             index (int, optional): The index of the estimate to use. Defaults to -1.
+            num_x (int, optional): The number of x-axis ticks. Defaults to 5.
+            num_y (int, optional): The number of y-axis ticks. Defaults to 5.
         """
         if qty == "Inner Product Kernel":
-            view(self.A, self.scales, self.scales, regular=True, title=self.Wavelet.name + " Inner Product Kernel",
-                 x_label="Scale", y_label="Scale")
+            view(self.A, self.scales, self.scales, regular=True, title=self.Wavelet.name + " " + qty,
+                 x_label="Scale", y_label="Scale", num_x=num_x, num_y=num_y)
         elif qty == "Evolutionary Wavelet Spectrum":
             view(np.log(self.estimates[index]["ews"] + 0.0001), self.times, self.scales, regular=self.regular,
-                 title="Evolutionary Wavelet Spectrum", x_label="Time", y_label="Scale")
+                 title=qty, x_label="Time", y_label="Scale", num_x=num_x, num_y=num_y)
         elif qty == "Local Autocovariance":
             view(self.estimates[index]["local_autocov"], self.times, self.estimates[index]["tau"],
-                 regular=self.regular, title="Local Autocovariance", x_label="Time", y_label="Lag")
+                 regular=self.regular, title=qty, x_label="Time", y_label="Lag", num_x=num_x, num_y=num_y)
         elif qty == "Local Autocorrelation":
             view(self.estimates[index]["local_autocorr"], self.times, self.estimates[index]["tau"],
-                 regular=self.regular, title="Local Autocorrelation", x_label="Time", y_label="Lag")
+                 regular=self.regular, title=qty, x_label="Time", y_label="Lag", num_x=num_x, num_y=num_y)
         else:
             raise ValueError("Invalid argument for qty.")
         

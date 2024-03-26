@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def round_to_sig_figs(num:float, sig_figs:int) -> float:
+def round_to_sig_figs(nums:np.ndarray, sig_figs:int) -> float:
     """
     Rounds a number to the specified number of significant figures.
     
@@ -12,9 +12,10 @@ def round_to_sig_figs(num:float, sig_figs:int) -> float:
     Returns:
         float: The rounded number.
     """
-    if num != 0:
-        return round(num, sig_figs - 1 - int(np.floor(np.log10(abs(num)))))
-    return 0
+    dps = sig_figs - 1 - int(np.floor(np.log10(np.max(np.abs(nums)))))
+    if dps <= 0:
+        return np.round(nums, dps).astype(int)
+    return np.round(nums, dps)
 
 def view(M: np.ndarray, x: np.ndarray, y: np.ndarray, regular: bool = True, num_x: int = 5, 
          num_y: int = 5, title: str = "", x_label: str = "", y_label: str = "") -> None:
@@ -39,19 +40,19 @@ def view(M: np.ndarray, x: np.ndarray, y: np.ndarray, regular: bool = True, num_
     if regular:
         # Plot the 2D array
         im = ax.imshow(M, aspect="auto", origin="lower")
+        ax.set_xticks(np.linspace(0, len(x), num_x))
+        ax.set_yticks(np.linspace(0, len(y), num_y))
     else:
         # Create a 2D grid for the x and y coordinates
         X, Y = np.meshgrid(x, y)
         # Plot the 2D array
         im = ax.pcolormesh(X, Y, M)
+        ax.set_xticks(np.linspace(x[0], x[-1], num_x))
+        ax.set_yticks(np.linspace(y[0], y[-1], num_y))
 
-    x_tick_labels = [round_to_sig_figs(i, 3) for i in np.linspace(x[0], x[-1], num_x)]
-    y_tick_labels = [round_to_sig_figs(i, 3) for i in np.linspace(y[0], y[-1], num_y)]
     # Set the x and y axis labels and ticks
-    ax.set_xticks(np.linspace(0, len(x), num_x))
-    ax.set_xticklabels(x_tick_labels)
-    ax.set_yticks(np.linspace(0, len(y), num_y))
-    ax.set_yticklabels(y_tick_labels)
+    ax.set_xticklabels(round_to_sig_figs(np.linspace(x[0], x[-1], num_x), 3))
+    ax.set_yticklabels(round_to_sig_figs(np.linspace(y[0], y[-1], num_y), 3))
     # Set the title and labels
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label) 
