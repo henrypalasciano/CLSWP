@@ -1,7 +1,7 @@
 import numpy as np
 import pywt
 
-def smoothing(I, wavelet="db10", by_level=True):
+def wavelet_smoothing(I, wavelet="db10", by_level=True):
     """
     Apply wavelet-based smoothing.
 

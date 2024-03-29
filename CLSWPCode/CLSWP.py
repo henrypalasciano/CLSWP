@@ -4,6 +4,7 @@ from cwt import cwt
 from ews import ews
 from local_acf import local_autocovariance, local_autocorrelation
 from plotting import view
+from smoothing import wavelet_smoothing
 from wavelets import Wavelet
 
 class CLSWP():
@@ -51,7 +52,8 @@ class CLSWP():
         # Whether the ews and other estimates lie on a regularly spaced grid. Required for the plotting function in the child classes.
         self.regular = True
         # The times at which the observations are made
-        self.times = np.arange(0, len(self.ts)) * sampling_rate
+        self.times = np.arange(0, len(self.ts))
+        self.sampling_rate = sampling_rate
         # List of dictionaries containing computed estimates with different parameters
         self.estimates = []
         
@@ -68,8 +70,15 @@ class CLSWP():
             smooth_wav (str, optional): The wavelet for smoothing the raw wavelet periodogram. Defaults to "db4".
             by_level (bool, optional): Whether to perform the smoothing by level or globally. Defaults to True.
         """
-        S = ews(self.coeffs, self.A, self.scales, mu=mu, method=method, n_iter=n_iter,
-                smooth=smooth, wavelet=smooth_wav, by_level=by_level)
+        # Compute the raw wavelet periodogram
+        I = self.coeffs ** 2
+        # Apply smoothing to the raw wavelet periodogram
+        if smooth:
+            I = wavelet_smoothing(I, wavelet=smooth_wav, by_level=by_level)
+        # If not regular, keep only locations corresponding to observed values
+        if not self.regular:
+            I = I[:, self.times]
+        S = ews(I, self.A, self.scales, mu=mu, method=method, n_iter=n_iter)
         self.estimates.append({"ews": S, "mu": mu, "method": method, "n_iter": n_iter})
 
     def compute_local_acf(self, tau: np.ndarray, index: int = -1):
@@ -96,17 +105,18 @@ class CLSWP():
             num_x (int, optional): The number of x-axis ticks. Defaults to 5.
             num_y (int, optional): The number of y-axis ticks. Defaults to 5.
         """
+        times = self.times * self.sampling_rate
         if qty == "Inner Product Kernel":
             view(self.A, self.scales, self.scales, regular=True, title=self.Wavelet.name + " " + qty,
                  x_label="Scale", y_label="Scale", num_x=num_x, num_y=num_y)
         elif qty == "Evolutionary Wavelet Spectrum":
-            view(np.log(self.estimates[index]["ews"] + 0.0001), self.times, self.scales, regular=self.regular,
+            view(np.log(self.estimates[index]["ews"] + 0.0001), times, self.scales, regular=self.regular,
                  title=qty, x_label="Time", y_label="Scale", num_x=num_x, num_y=num_y)
         elif qty == "Local Autocovariance":
-            view(self.estimates[index]["local_autocov"], self.times, self.estimates[index]["tau"],
+            view(self.estimates[index]["local_autocov"], times, self.estimates[index]["tau"],
                  regular=self.regular, title=qty, x_label="Time", y_label="Lag", num_x=num_x, num_y=num_y)
         elif qty == "Local Autocorrelation":
-            view(self.estimates[index]["local_autocorr"], self.times, self.estimates[index]["tau"],
+            view(self.estimates[index]["local_autocorr"], times, self.estimates[index]["tau"],
                  regular=self.regular, title=qty, x_label="Time", y_label="Lag", num_x=num_x, num_y=num_y)
         else:
             raise ValueError("Invalid argument for qty.")
@@ -129,12 +139,11 @@ class CLSWPMissingData(CLSWP):
         super().__init__(ts, Wavelet, scales, sampling_rate, bc)
         self.regular = keep_all
         if keep_all:
-            self.times = np.arange(0, len(ts)) * sampling_rate
+            self.times = np.arange(0, len(ts))
         else:
-            # Keep only the coefficients corresponding to non-missing values
-            self.times = times * sampling_rate
-            self.coeffs = self.coeffs[:, times]
-
+            # Irregularly spaced times
+            self.times = times
+            
     @staticmethod
     def reweight(x):
         """
@@ -178,15 +187,14 @@ class CLSWPIrregularlySpacedData(CLSWP):
             bc (str, optional): The boundary condition for the wavelet transform. Defaults to "symmetric".
             keep_all (bool, optional): Whether to keep all coefficients or only the ones corresponding to non-missing values. Defaults to True.
             """
-            ts, t_idx = self.spacing_function(ts, times, sampling_rate)
+            ts, times = self.spacing_function(ts, times, sampling_rate)
             super().__init__(ts, Wavelet, scales, 1, bc)
             self.regular = keep_all
             if keep_all:
-                self.times = np.arange(0, len(ts)) * sampling_rate
+                self.times = np.arange(0, len(ts))
             else:
                 # Keep only the coefficients corresponding to non-missing values
                 self.times = times
-                self.coeffs = self.coeffs[:, t_idx]
 
     @staticmethod
     def spacing_function(x, times, sampling_rate):

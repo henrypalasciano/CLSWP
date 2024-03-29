@@ -84,44 +84,40 @@ class Ricker(Wavelet):
     """
     Ricker Wavelet Class.
     """
-    class Ricker(Wavelet):
-        """
-        Ricker Wavelet Class.
-        """
-        def __init__(self, scales: np.ndarray) -> None:
-            self.name = "Ricker"
-            self.scales = scales
-        
-        def wavelet(self, v: np.ndarray, u: np.ndarray = None) -> np.ndarray:
-            # If u is not provided, carry out computation for all scales
-            if u == None:
-                u = self.scales.reshape(-1,1)
-            # Compute the Ricker wavelet at scales u
-            const = 2 / (np.pi ** (1/4) * np.sqrt(3 * u))
-            x = v / u
-            return const * (1 - x ** 2) * np.exp(-(x ** 2) / 2)
-        
-        def wavelet_filter(self, sampling_rate: float) -> tuple:
-            # Compute the limits and number of points for the Ricker wavelet
-            n_points = np.round(4 * self.scales * sampling_rate).astype(int)
-            limits = n_points / sampling_rate
-            return -limits, limits, 2 * n_points
-        
-        def autocorrelation_wavelet(self, tau: np.ndarray, u: np.ndarray = None) -> np.ndarray:
-            # If u is not provided, carry out computation for all scales
-            if u == None:
-                u = self.scales.reshape(-1,1)
-            # Compute the Ricker autocorrelation wavelet at scales u
-            frac = (tau ** 2) / (u ** 2)
-            return (1 + (frac ** 2) / 12 - frac) * np.exp(-frac / 4)
-        
-        def inner_product_kernel(self) -> np.ndarray:
-            # Scales at which to compute the inner product kernel
-            u = self.scales
-            x = u.reshape(-1,1)
-            # Compute the inner product kernel for the Ricker wavelet
-            k = (u ** 2 + x ** 2) ** (9/2)
-            return 70 * np.sqrt(np.pi) * (u * x) ** 5 / (3 * k)
+    def __init__(self, scales: np.ndarray) -> None:
+        self.name = "Ricker"
+        self.scales = scales
+    
+    def wavelet(self, v: np.ndarray, u: np.ndarray = None) -> np.ndarray:
+        # If u is not provided, carry out computation for all scales
+        if u == None:
+            u = self.scales.reshape(-1,1)
+        # Compute the Ricker wavelet at scales u
+        const = 2 / (np.pi ** (1/4) * np.sqrt(3 * u))
+        x = v / u
+        return const * (1 - x ** 2) * np.exp(-(x ** 2) / 2)
+    
+    def wavelet_filter(self, sampling_rate: float) -> tuple:
+        # Compute the limits and number of points for the Ricker wavelet
+        n_points = np.round(4 * self.scales * sampling_rate).astype(int)
+        limits = n_points / sampling_rate
+        return -limits, limits, 2 * n_points
+    
+    def autocorrelation_wavelet(self, tau: np.ndarray, u: np.ndarray = None) -> np.ndarray:
+        # If u is not provided, carry out computation for all scales
+        if u == None:
+            u = self.scales.reshape(-1,1)
+        # Compute the Ricker autocorrelation wavelet at scales u
+        frac = (tau ** 2) / (u ** 2)
+        return (1 + (frac ** 2) / 12 - frac) * np.exp(-frac / 4)
+    
+    def inner_product_kernel(self) -> np.ndarray:
+        # Scales at which to compute the inner product kernel
+        u = self.scales
+        x = u.reshape(-1,1)
+        # Compute the inner product kernel for the Ricker wavelet
+        k = (u ** 2 + x ** 2) ** (9/2)
+        return 70 * np.sqrt(np.pi) * (u * x) ** 5 / (3 * k)
 class Shannon(Wavelet):
     """
     Shannon Wavelet Class.

@@ -1,36 +1,25 @@
 import numpy as np
-from wavelets import Wavelet
-from smoothing import smoothing
 
 # ===================================
 # Evolutionary Wavelet Spectrum
 # ===================================
 
-def ews(c: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
-        method: str = "Daubechies_Iter_Asymmetric",  n_iter: int = 100, 
-        smooth: bool = True, wavelet: str = "db4", by_level: bool = True) -> np.ndarray:
+def ews(I: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
+        method: str = "Daubechies_Iter_Asymmetric",  n_iter: int = 100) -> np.ndarray:
     """
     Compute the Evolutionary Wavelet Spectrum (EWS).
 
     Args:
-        c (np.ndarray): Wavelet coefficients.
+        c (np.ndarray): The raw wavelet periodogram.
         A (np.ndarray): Inner product kernel.
         scales (np.ndarray): Regularly spaced scales.
         mu (float or np.ndarray, optional): Regularisation parameter. Defaults to 0.01.
         method (str, optional): Regularisation method. Defaults to "Daubechies_Iter_Asymmetric".
         n_iter (int, optional): Number of iterations. Defaults to 100.
-        smooth (bool, optional): Smooth the raw wavelet periodogram. Defaults to True.
-        wavelet (str, optional): Wavelet to use for performing the smoothing. Defaults to "db4".
-        by_level (bool, optional):  If True, smooth by level. If False, smooth globally. Defaults to True.
 
     Returns:
         np.ndarray: Evolutionary wavelet spectrum.
     """
-    # Compute the raw wavelets periodogram and rescale by delta
-    I = c ** 2 / (scales[1] - scales[0])
-    # Smooth the raw wavelet periodogram
-    if smooth:
-        I = smoothing(I, wavelet=wavelet, by_level=by_level)
     
     # Compute the Evolutionary Wavelet Spectrum using one of the specified methods
     if method == "Daubechies_Iter_Asymmetric":
