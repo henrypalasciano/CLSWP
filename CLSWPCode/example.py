@@ -6,8 +6,11 @@ from wavelets import Haar
 x = np.random.randn(3000)
 y = np.random.choice(np.arange(1, 3000), 500, replace=False)
 x[y] = np.nan
-s = np.linspace(2, 201, 200)
-
+s = np.linspace(2, 101, 100)
+# %%
+x = np.random.randn(5000)
+s = np.linspace(2, 100, 99)
+c0 = CLSWP(x, Haar, s)
 # %%
 c = CLSWPMissingData(x, Haar, s, keep_all=False)
 # %%

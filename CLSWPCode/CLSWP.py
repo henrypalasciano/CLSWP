@@ -4,7 +4,7 @@ from cwt import cwt
 from ews import ews
 from local_acf import local_autocovariance, local_autocorrelation
 from plotting import view
-from smoothing import wavelet_smoothing
+from smoothing import wav_periodogram_smoothing, wavelet_smoothing
 from wavelets import Wavelet
 
 class CLSWP():
@@ -58,7 +58,8 @@ class CLSWP():
         self.estimates = []
         
     def compute_ews(self, mu: float, method: str = "Daubechies_Iter_Asymmetric", n_iter: int = 100, 
-                    smooth: bool = True, smooth_wav: str = "db4", by_level: bool = True) -> None:
+                    smooth: bool = True, periodogram: bool = True, smooth_wav: str = "db4", soft: bool = True,
+                    levels: int  = 3) -> None:
         """
         Compute the Evolutionary Wavelet Spectrum (EWS) for a given value of mu, method and number of iterations (if applicable).
 
@@ -67,18 +68,26 @@ class CLSWP():
             method (str, optional): The method for computing the EWS. Defaults to "Daubechies_Iter_Asymmetric".
             n_iter (int, optional): The number of iterations for computing the EWS. Defaults to 100.
             smooth (bool, optional): Whether to apply smoothing to the raw wavelet periodogram before estimating the EWS. Defaults to True.
+            periodogram (bool, optional): Smooth the raw wavelet periodogram if True, otherwise smooth wavelet coefficients. Defaults to True.
             smooth_wav (str, optional): The wavelet for smoothing the raw wavelet periodogram. Defaults to "db4".
-            by_level (bool, optional): Whether to perform the smoothing by level or globally. Defaults to True.
+            soft (bool, optional): Whether to apply soft thresholding. Defaults to True.
+            levels (int, optional): The finest level of wavelet decomposition not smoothed from. Defaults to 3.
         """
-        # Compute the raw wavelet periodogram
-        I = self.coeffs ** 2
-        # Apply smoothing to the raw wavelet periodogram
+        # Difference between consecutive scales
+        delta = self.scales[1] - self.scales[0]
+        # Compute the raw wavelet periodogram and apply smoothing
         if smooth:
-            I = wavelet_smoothing(I, wavelet=smooth_wav, by_level=by_level)
+            if periodogram: # Smooth the raw wavelet periodogram
+                I = wav_periodogram_smoothing(self.coeffs ** 2, wavelet=smooth_wav, soft=soft, levels=levels)
+            else: # Smooth the wavelet coefficients
+                I = wavelet_smoothing(self.coeffs, wavelet=smooth_wav, soft=soft, levels=levels) ** 2
+        else: # Don't apply any smoothing
+            I = self.coeffs ** 2
         # If not regular, keep only locations corresponding to observed values
         if not self.regular:
             I = I[:, self.times]
-        S = ews(I, self.A, self.scales, mu=mu, method=method, n_iter=n_iter)
+        # Compute the EWS
+        S = ews(I / delta, self.A, mu=mu, method=method, n_iter=n_iter)
         self.estimates.append({"ews": S, "mu": mu, "method": method, "n_iter": n_iter})
 
     def compute_local_acf(self, tau: np.ndarray, index: int = -1):
@@ -105,7 +114,7 @@ class CLSWP():
             num_x (int, optional): The number of x-axis ticks. Defaults to 5.
             num_y (int, optional): The number of y-axis ticks. Defaults to 5.
         """
-        times = self.times * self.sampling_rate
+        times = self.times / self.sampling_rate
         if qty == "Inner Product Kernel":
             view(self.A, self.scales, self.scales, regular=True, title=self.Wavelet.name + " " + qty,
                  x_label="Scale", y_label="Scale", num_x=num_x, num_y=num_y)

@@ -4,7 +4,7 @@ import numpy as np
 # Evolutionary Wavelet Spectrum
 # ===================================
 
-def ews(I: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
+def ews(I: np.ndarray, A: np.ndarray, mu: float = 0.01,
         method: str = "Daubechies_Iter_Asymmetric",  n_iter: int = 100) -> np.ndarray:
     """
     Compute the Evolutionary Wavelet Spectrum (EWS).
@@ -12,7 +12,6 @@ def ews(I: np.ndarray, A: np.ndarray, scales: np.ndarray, mu: float = 0.01,
     Args:
         c (np.ndarray): The raw wavelet periodogram.
         A (np.ndarray): Inner product kernel.
-        scales (np.ndarray): Regularly spaced scales.
         mu (float or np.ndarray, optional): Regularisation parameter. Defaults to 0.01.
         method (str, optional): Regularisation method. Defaults to "Daubechies_Iter_Asymmetric".
         n_iter (int, optional): Number of iterations. Defaults to 100.

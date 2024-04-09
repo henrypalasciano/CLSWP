@@ -201,4 +201,3 @@ def cwt_arbitrary_shifts(x: np.ndarray, Wavelet: Wavelet, sampling_rate: float =
         return cwt(x, Wavelet, sampling_rate=sampling_rate, bc=bc, missing_data=False, 
                    irregularly_spaced=False)[:, ::int(1/k)]
         
-        
