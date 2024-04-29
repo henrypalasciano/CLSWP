@@ -1,10 +1,11 @@
 import numpy as np
+from typing import Union
 
 # ===================================
 # Evolutionary Wavelet Spectrum
 # ===================================
 
-def ews(I: np.ndarray, A: np.ndarray, mu: float = 0.01,
+def ews(I: np.ndarray, A: np.ndarray, mu: Union[float, np.ndarray] = None,
         method: str = "Daubechies_Iter_Asymmetric",  n_iter: int = 100) -> np.ndarray:
     """
     Compute the Evolutionary Wavelet Spectrum (EWS).
@@ -12,14 +13,17 @@ def ews(I: np.ndarray, A: np.ndarray, mu: float = 0.01,
     Args:
         c (np.ndarray): The raw wavelet periodogram.
         A (np.ndarray): Inner product kernel.
-        mu (float or np.ndarray, optional): Regularisation parameter. Defaults to 0.01.
+        mu (float or np.ndarray, optional): Regularisation parameter. If None, the standard deviation of the raw wavelet periodogram is used. This is computed using the entire estimate of the raw wavelet periodogram. For a mu which is a vector or matrix, the regularisation parameter is applied to each element of the raw wavelet periodogram. Defaults to None.
         method (str, optional): Regularisation method. Defaults to "Daubechies_Iter_Asymmetric".
         n_iter (int, optional): Number of iterations. Defaults to 100.
 
     Returns:
         np.ndarray: Evolutionary wavelet spectrum.
     """
-    
+    # If none 
+    if mu is None:
+        mu = np.std(I)
+
     # Compute the Evolutionary Wavelet Spectrum using one of the specified methods
     if method == "Daubechies_Iter_Asymmetric":
         S = daub_inv_iter_asym(I, A, mu, n_iter)
@@ -48,7 +52,7 @@ def daub_inv_iter_asym(y: np.ndarray, A: np.ndarray, mu: float, n_iter: int) -> 
         ndarray: Evolutionary wavelet spectrum.
     """
     # Initialize the solution vector x with random values between 0 and 1
-    x = np.random.uniform(0, 1, np.shape(y))
+    x = y.copy()
     # Normalize the inner product matrix A by dividing it by the largest eigenvalue
     e = np.real(np.linalg.eig(A)[0][0])
     A = A / e
@@ -121,3 +125,4 @@ def threshold(x: np.ndarray, mu: float) -> np.ndarray:
     x[x >= mu / 2] -= mu / 2
     x[x <= - mu / 2] += mu / 2
     return x
+

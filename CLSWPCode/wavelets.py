@@ -118,6 +118,8 @@ class Ricker(Wavelet):
         # Compute the inner product kernel for the Ricker wavelet
         k = (u ** 2 + x ** 2) ** (9/2)
         return 70 * np.sqrt(np.pi) * (u * x) ** 5 / (3 * k)
+    
+    
 class Shannon(Wavelet):
     """
     Shannon Wavelet Class.

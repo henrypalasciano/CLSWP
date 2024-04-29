@@ -14,7 +14,7 @@ c0 = CLSWP(x, Haar, s)
 # %%
 c = CLSWPMissingData(x, Haar, s, keep_all=False)
 # %%
-c.compute_ews(0.01, n_iter=1000)
+c.compute_ews(np.random.randn(1, 5000), n_iter=1000)
 # %%
 c.plot("Evolutionary Wavelet Spectrum")
 # %%
