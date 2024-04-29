@@ -3,45 +3,42 @@ import numpy as np
 from CLSWP import CLSWP, CLSWPMissingData, CLSWPIrregularlySpacedData
 from wavelets import Haar
 # %%
-x = np.random.randn(3000)
-y = np.random.choice(np.arange(1, 3000), 500, replace=False)
-x[y] = np.nan
-s = np.linspace(2, 101, 100)
-# %%
+# Regularly spaced data example
 x = np.random.randn(5000)
-s = np.linspace(2, 100, 99)
-c0 = CLSWP(x, Haar, s)
+scales = np.linspace(1, 100, 100)
+# Initialise CLSWP object
+C1 = CLSWP(x, Haar, scales)
+# Compute the Evolutionary Wavelet Spectrum and plot this
+C1.compute_ews(n_iter=1000)
+C1.plot("Evolutionary Wavelet Spectrum")
 # %%
-c = CLSWPMissingData(x, Haar, s, keep_all=False)
+# Compute the local autocovariance and autocorrelation and plot the local autocovariance
+C1.compute_local_acf(np.arange(0, 100))
+C1.plot("Local Autocovariance")
 # %%
-c.compute_ews(np.random.randn(1, 5000), n_iter=1000)
+# Missing data example
+y = np.random.choice(np.arange(0, 5000), 750, replace=False)
+z = x.copy()
+z[y] = np.nan
+# Initialise CLSWPMissingData object with keep all set to False (only computes the EWS at original data locations, speeding up the computation)
+C2 = CLSWPMissingData(z, Haar, scales, keep_all=False)
+# Compute the Evolutionary Wavelet Spectrum and plot this
+C2.compute_ews(n_iter=1000)
+C2.plot("Evolutionary Wavelet Spectrum")
 # %%
-c.plot("Evolutionary Wavelet Spectrum")
+# Compute the local autocovariance and autocorrelation and plot the local autocovariance
+C2.compute_local_acf(np.arange(0, 100))
+C2.plot("Local Autocovariance")
 # %%
-c2 = CLSWPMissingData(x, Haar, s, keep_all=True)
+# Irregularly spaced data example
+t = np.random.choice(np.arange(0, 7000), 5000, replace=False)
+t = np.sort(t)
+C3 = CLSWPIrregularlySpacedData(x, Haar, scales, t, sampling_rate=1)
+# Compute the Evolutionary Wavelet Spectrum and plot this
+C3.compute_ews(n_iter=1000)
+C3.plot("Evolutionary Wavelet Spectrum")
 # %%
-c2.compute_ews(0.01, n_iter=1000)
-# %%
-c2.plot("Evolutionary Wavelet Spectrum")
-# %%
-c.compute_local_acf(np.arange(0, 100))
-
-# %%
-c.plot("Local Autocovariance")
-
-# %%
-c.plot("Local Autocorrelation")
-# %%
-x = np.random.randn(3000)
-t = np.linspace(0, 3000, 6000)
-times = np.sort(np.round(np.random.choice(t, 3000, replace=False), 1))
-s = np.linspace(2, 201, 200)
-# %%
-c = CLSWPIrregularlySpacedData(x, Haar, s, times, sampling_rate=0.5, keep_all=False)
-# %%
-c.compute_ews(0.01, n_iter=1000)
-# %%
-c.plot("Evolutionary Wavelet Spectrum")
-# %%
-
+# Compute the local autocovariance and autocorrelation and plot the local autocovariance
+C3.compute_local_acf(np.arange(0, 100))
+C3.plot("Local Autocovariance")
 # %%
