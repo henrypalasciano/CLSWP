@@ -9,7 +9,7 @@ Functions to compute the continuous wavelet transform, evolutionary wavelet spec
 * ews.py - functions for computing an estimate of the evolutionary wavelet spectrum;
 * local_acf.py - functions for computing estimates of the local autocovariance and autocorrelation;
 * plotting.py - functions for plotting estimates and quantities of interest;
-* smoothing.py - functions for smoothing on the raw wavelet periodogram;
+* smoothing.py - functions for smoothing the raw wavelet periodogram;
 * CLSWP - classes for creating an instance of the continuous locally staionary wavelet process, for which one can compute the evolutionary wavelet spectrum and local autocovariance. Additional classes for time series with missing or irregularly spaced observations also available.
 
 ### Example 1:
