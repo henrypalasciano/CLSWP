@@ -119,7 +119,52 @@ class Ricker(Wavelet):
         k = (u ** 2 + x ** 2) ** (9/2)
         return 70 * np.sqrt(np.pi) * (u * x) ** 5 / (3 * k)
     
+
+class Morlet(Wavelet):
+    """
+    Morlet Wavelet Class.
+    """
+    def __init__(self, scales: np.ndarray) -> None:
+        self.name = "Morlet"
+        self.scales = scales
+
+    def wavelet(self, v: np.ndarray, u: np.ndarray = None) -> np.ndarray:
+        # If u is not provided, carry out computation for all scales
+        if u == None:
+            u = self.scales.reshape(-1,1)
+        a = np.sqrt(2) / (np.pi ** (1 / 4))
+        b = np.sqrt(2 / np.log(2)) * np.pi
+        x = v / u
+        return a * np.cos(b * x) * np.exp(-x ** 2 / 2)
+        
+    def wavelet_filter(self, sampling_rate: float) -> tuple:
+        # Compute the limits and number of points for the Morlet wavelet
+        n_points = np.round(4 * self.scales * sampling_rate).astype(int)
+        limits = n_points / sampling_rate
+        return -limits, limits, 2 * n_points
+
+    def autocorrelation_wavelet(self, tau: np.ndarray, u: np.ndarray = None) -> np.ndarray:
+        # If u is not provided, carry out computation for all scales
+        if u == None:
+            u = self.scales.reshape(-1,1)
+        # Compute the Morlet autocorrelation wavelet at scales u
+        b = np.sqrt(2 / np.log(2)) * np.pi
+        x = tau / u
+        return (np.exp(-b ** 2) + np.cos(b * x)) * np.exp(-x ** 2 / 4)
     
+    def inner_product_kernel(self) -> np.ndarray:
+        # Scales at which to compute the inner product kernel
+        u = self.scales
+        x = u.reshape(-1,1)
+        b = 2 / np.log(2) * np.pi ** 2
+        d = x ** 2 + u ** 2
+        p = 2 * u * x
+        e = np.exp(-2 * b)
+        c1 = 2 * np.cosh(b * (u ** 2 - x ** 2) / (2 * d)) * np.exp(b / 2)
+        c2 = np.cosh(p * b / d) * np.exp(b)
+        return p * np.sqrt(np.pi / d) * e * (1 + c1 + c2)  
+
+
 class Shannon(Wavelet):
     """
     Shannon Wavelet Class.
