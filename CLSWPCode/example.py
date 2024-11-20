@@ -9,7 +9,7 @@ scales = np.linspace(1, 100, 100)
 # Initialise CLSWP object
 C1 = CLSWP(x, Haar, scales)
 # Compute the Evolutionary Wavelet Spectrum and plot this
-C1.compute_ews(n_iter=1000)
+C1.compute_ews(N=1000)
 C1.plot("Evolutionary Wavelet Spectrum")
 # %%
 # Compute the local autocovariance and autocorrelation and plot the local autocovariance
@@ -23,7 +23,7 @@ z[y] = np.nan
 # Initialise CLSWPMissingData object with keep all set to False (only computes the EWS at original data locations, speeding up the computation)
 C2 = CLSWPMissingData(z, Haar, scales, keep_all=False)
 # Compute the Evolutionary Wavelet Spectrum and plot this
-C2.compute_ews(n_iter=1000)
+C2.compute_ews(N=1000)
 C2.plot("Evolutionary Wavelet Spectrum")
 # %%
 # Compute the local autocovariance and autocorrelation and plot the local autocovariance
@@ -35,7 +35,7 @@ t = np.random.choice(np.arange(0, 7000), 5000, replace=False)
 t = np.sort(t)
 C3 = CLSWPIrregularlySpacedData(x, Haar, scales, t, sampling_rate=1)
 # Compute the Evolutionary Wavelet Spectrum and plot this
-C3.compute_ews(n_iter=1000)
+C3.compute_ews(N=1000)
 C3.plot("Evolutionary Wavelet Spectrum")
 # %%
 # Compute the local autocovariance and autocorrelation and plot the local autocovariance

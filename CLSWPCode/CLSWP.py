@@ -59,7 +59,7 @@ class CLSWP():
         self.times = np.arange(0, len(self.ts))
         self.sampling_rate = sampling_rate
         
-    def compute_ews(self, mu: Union[float, np.ndarray] = None, method: str = "Daubechies_Iter_Asymmetric", n_iter: int = 100, 
+    def compute_ews(self, mu: Union[float, np.ndarray] = None, method: str = "Daubechies_Iter_Asymmetric", N: int = 100, 
                     smooth: bool = True, smooth_wav: str = "db5", smooth_thr_estimator: callable = np.std, soft: bool = True, 
                     levels: int  = 3, by_level=False, log_transform=True) -> None:
         """
@@ -68,7 +68,7 @@ class CLSWP():
         Args:
             mu (float or np.ndarray, optional): Regularisation parameter for computing an estimate of the evolutionary wavelet spectrum. If None, the standard deviation of the raw wavelet periodogram is used. This is computed using the entire estimate of the raw wavelet periodogram. For a mu which is a vector or matrix, the regularisation parameter is applied to each element of the raw wavelet periodogram. Defaults to None.
             method (str, optional): The method for computing the EWS. Defaults to "Daubechies_Iter_Asymmetric".
-            n_iter (int, optional): The number of iterations for computing the EWS. Defaults to 100.
+            N (int, optional): The number of iterations for computing the EWS. Defaults to 100.
             smooth (bool, optional): Whether to apply smoothing to the raw wavelet periodogram before estimating the EWS. Defaults to True.
             smooth_wav (str, optional): The wavelet for smoothing the raw wavelet periodogram. Defaults to "db5".
             smooth_thr_estimator (callable, optional): The method used to calculate the threshold. Defaults to np.std.
@@ -89,7 +89,7 @@ class CLSWP():
         if not self.regular:
             I = I[:, self.times]
         # Compute the EWS
-        self.S = ews(I / delta, self.A, mu=mu, method=method, n_iter=n_iter)
+        self.S = ews(I, self.A * delta, mu=mu, N=N)
 
     def compute_local_acf(self, tau: np.ndarray):
         """

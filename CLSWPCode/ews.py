@@ -1,128 +1,65 @@
 import numpy as np
 from typing import Union
+from pywt import wavedec
+from smoothing import mad
 
 # ===================================
 # Evolutionary Wavelet Spectrum
 # ===================================
 
-def ews(I: np.ndarray, A: np.ndarray, mu: Union[float, np.ndarray] = None,
-        method: str = "Daubechies_Iter_Asymmetric",  n_iter: int = 100) -> np.ndarray:
+def ews(I: np.ndarray, A: np.ndarray, mu: Union[float, np.ndarray] = None, measure: callable = mad, mu_wav: str = "db5",  
+        N: int = 100) -> np.ndarray:
     """
     Compute the Evolutionary Wavelet Spectrum (EWS).
 
     Args:
-        c (np.ndarray): The raw wavelet periodogram.
+        I (np.ndarray): The raw wavelet periodogram.
         A (np.ndarray): Inner product kernel.
-        mu (float or np.ndarray, optional): Regularisation parameter. If None, the standard deviation of the raw wavelet periodogram is used. This is computed using the entire estimate of the raw wavelet periodogram. For a mu which is a vector or matrix, the regularisation parameter is applied to each element of the raw wavelet periodogram. Defaults to None.
-        method (str, optional): Regularisation method. Defaults to "Daubechies_Iter_Asymmetric".
-        n_iter (int, optional): Number of iterations. Defaults to 100.
+        mu (float or np.ndarray, optional): Regularisation parameter. Defaults to None.
+        measure (callable, optional): Measure function. Defaults to mad. Only used if mu is None.
+        mu_wav (str, optional): Wavelet used for the measure function. Defaults to "db5". Only used if mu is None.
+        N (int, optional): Number of iterations. Defaults to 100.
 
     Returns:
         np.ndarray: Evolutionary wavelet spectrum.
     """
     # If none 
     if mu is None:
-        mu = np.std(I)
-
-    # Compute the Evolutionary Wavelet Spectrum using one of the specified methods
-    if method == "Daubechies_Iter_Asymmetric":
-        S = daub_inv_iter_asym(I, A, mu, n_iter)
-    elif method == "Tikhonov":
-        S = tikhonov(I, A, mu)
-    elif method == "Lasso":
-        S = lasso(I, A, mu)
+        # Finest scale wavelet coefficients at each scale
+        dwt = wavedec(I, wavelet=mu_wav, axis=1, level=1)[-1]
+        mu = measure(dwt, axis=1, keepdims=True)
+    # Estimate the evolutionary wavelet spectrum
+    S = asym_ISTA(I, A, mu, N)
 
     return S
 
-# ===================================
-# Regularisation Methods
-# ===================================
 
-def daub_inv_iter_asym(y: np.ndarray, A: np.ndarray, mu: float, n_iter: int) -> np.ndarray:
+def asym_ISTA(I: np.ndarray, A: np.ndarray, mu: Union[float, np.ndarray], N: int) -> np.ndarray:
     """
-    Daubechies Iterative Scheme with Asymmetric Regularisation as adapted from https://arxiv.org/abs/math/0307152.
+    Daubechies Iterative Scheme with Asymmetric Regularisation as adapted from https://doi.org/10.1002/cpa.20042.
 
     Args:
-        y (ndarray): Raw wavelet periodogram.
+        I (ndarray): Raw wavelet periodogram.
         A (ndarray): Inner product matrix.
-        mu (float): Threshold.
-        n_iter (int): Number of iterations.
+        mu (float or ndarray): Regularisation parameter.
+        N (int): Number of iterations.
 
     Returns:
         ndarray: Evolutionary wavelet spectrum.
     """
-    # Initialize the solution vector x with random values between 0 and 1
-    x = y.copy()
     # Normalize the inner product matrix A by dividing it by the largest eigenvalue
     e = np.real(np.linalg.eig(A)[0][0])
     A = A / e
+    I = I / e
+    # Initialize the solution vector x with random values between 0 and 1
+    S = I.copy()
     # Compute A @ y - mu and A @ A
-    A_y = A @ y - mu
+    A_y = A @ I - mu
     A_2 = A @ A
     
     # Perform the iterative scheme for n_iter iterations
-    for i in range(n_iter):
+    for i in range(N):
         # Update the solution vector x using the iterative scheme
-        x = np.maximum(x + A_y - A_2 @ x, 0)
-        
-    # Return the normalized solution vector x
-    return x / e
+        S = np.maximum(S + A_y - A_2 @ S, 0)
 
-def tikhonov(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
-    """
-    Tikhonov regularisation as defined in https://arxiv.org/abs/math/0307152.
-    
-    Args:
-        y (np.ndarray): The vector or matrix y = Ax.
-        A (np.ndarray): The matrix operator.
-        mu (float): The regularization parameter.
-        
-    Returns:
-        np.ndarray: The solution x of y = Ax.
-    """
-    m, n = np.shape(A)
-    # Compute inverse of (mu I + A^2)
-    B = np.linalg.inv(mu * np.eye(m) + A @ A)
-    # Return (mu I + A^2)^-1 A y
-    return B @ A @ y
-
-def lasso(y: np.ndarray, A: np.ndarray, mu: float) -> np.ndarray:
-    """
-    Lasso regularisation as defined in https://arxiv.org/abs/math/0307152.
-
-    Args:
-        y (np.ndarray): The vector or matrix y = Ax.
-        A (np.ndarray): The matrix operator.
-        mu (float): The regularization parameter.
-
-    Returns:
-        np.ndarray: The solution x of y = Ax.
-    """  
-    # Compute the eigenvalues and eigenvectors of A
-    eig, ev = np.linalg.eig(A)
-    eig = eig.reshape(-1,1)
-    # Compute the coefficients of the solution
-    coeffs = threshold(ev.T @ y * eig, mu) / (eig ** 2)
-    coeffs = coeffs.T
-    ev = np.array([ev.T])
-    # Compute the solution
-    x = coeffs @ ev
-    return x[0].T
-
-def threshold(x: np.ndarray, mu: float) -> np.ndarray:
-    """
-    Soft thresholding function.
-
-    Args:
-        x (np.ndarray): Input array.
-        mu (float): Threshold.
-    
-    Returns:
-        np.ndarray: Soft thresholded array.
-    """
-    # Apply soft thresholding to the input array
-    x[np.abs(x) < mu / 2] = 0 
-    x[x >= mu / 2] -= mu / 2
-    x[x <= - mu / 2] += mu / 2
-    return x
-
+    return S
