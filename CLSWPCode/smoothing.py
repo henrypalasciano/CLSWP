@@ -1,14 +1,14 @@
 import numpy as np
 from pywt import wavedec, waverec
 
-def smooth(I, wavelet="db5", method=np.std, soft=True, levels=3, by_level=False, log_transform=True):
+def smooth(I: np.ndarray, wavelet: str = "db5", thr_estimator: callable = np.std, soft: bool = True, levels: int = 3, by_level: bool = False, log_transform: bool = True) -> np.ndarray:
     """
     Apply wavelet-based smoothing to each level of the raw wavelet periodogram of a locally stationary wavelet process.
 
     Args:
         I (ndarray): Raw wavelet periodogram.
         wavelet (str, optional): Wavelet used for smoothing. For a list of wavelet families use pywt.families(short=True) and for a list of wavelet names use pywt.wavelist(family=None, kind='all'). For more information see https://pywavelets.readthedocs.io/en/latest/ref/index.html. Defaults to "db5".
-        method (function, optional): Method used to calculate the threshold. Defaults to np.std.
+        thr_estimator (function, optional): Method used to calculate the threshold. Defaults to np.std.
         soft (bool, optional): If True, apply soft thresholding, else apply hard thresholding. Defaults to True.
         levels (int, optional): Levels to smooth from, with 0 being the coarsest scale. Defaults to 3.
         by_level (bool, optional): If True, apply a different threshold to each scale of the dwt of each level of the raw wavelet periodogram. Defaults to False.
@@ -30,11 +30,11 @@ def smooth(I, wavelet="db5", method=np.std, soft=True, levels=3, by_level=False,
     if by_level:
         # Apply a different threshold to each scale of the dwt of each level of the raw wavelet periodogram
         for i,c in enumerate(dwt[levels:]):
-            t = method(c, axis=1, keepdims=True) * np.log(n)
+            t = thr_estimator(c, axis=1, keepdims=True) * np.log(n)
             dwt[i + levels] = thr(c, t, soft)
     else:
         # Compute a single threshold for each level of the raw wavelet periodogram
-        t = method(np.hstack(dwt[levels:]), axis=1, keepdims=True) * np.log(n)
+        t = thr_estimator(np.hstack(dwt[levels:]), axis=1, keepdims=True) * np.log(n)
         for i,c in enumerate(dwt[levels:]):
             dwt[i + levels] = thr(c, t, soft)
 

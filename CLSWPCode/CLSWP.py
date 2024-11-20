@@ -60,7 +60,8 @@ class CLSWP():
         self.sampling_rate = sampling_rate
         
     def compute_ews(self, mu: Union[float, np.ndarray] = None, method: str = "Daubechies_Iter_Asymmetric", n_iter: int = 100, 
-                    smooth: bool = True, smooth_wav: str = "db4", soft: bool = True, levels: int  = 3) -> None:
+                    smooth: bool = True, smooth_wav: str = "db5", smooth_thr_estimator: callable = np.std, soft: bool = True, 
+                    levels: int  = 3, by_level=False, log_transform=True) -> None:
         """
         Compute the Evolutionary Wavelet Spectrum (EWS) for a given value of mu, method and number of iterations (if applicable).
 
@@ -69,15 +70,19 @@ class CLSWP():
             method (str, optional): The method for computing the EWS. Defaults to "Daubechies_Iter_Asymmetric".
             n_iter (int, optional): The number of iterations for computing the EWS. Defaults to 100.
             smooth (bool, optional): Whether to apply smoothing to the raw wavelet periodogram before estimating the EWS. Defaults to True.
-            smooth_wav (str, optional): The wavelet for smoothing the raw wavelet periodogram. Defaults to "db4".
+            smooth_wav (str, optional): The wavelet for smoothing the raw wavelet periodogram. Defaults to "db5".
+            smooth_thr_estimator (callable, optional): The method used to calculate the threshold. Defaults to np.std.
             soft (bool, optional): Whether to apply soft thresholding. Defaults to True.
-            levels (int, optional): The finest level of wavelet decomposition not smoothed from. Defaults to 3.
+            levels (int, optional): The levels to smooth from, with 0 being the coarsest scale. Defaults to 3.
+            by_level (bool, optional): Whether to apply a different threshold to each scale of the dwt of each level of the raw wavelet periodogram. Defaults to False.
+            log_transform (bool, optional): Whether to apply a log transform to the raw wavelet periodogram before smoothing. Defaults to True.
         """
         # Difference between consecutive scales
         delta = self.scales[1] - self.scales[0]
         # Compute the raw wavelet periodogram and apply smoothing
         if smooth:
-            I = smooth(self.coeffs ** 2, wavelet=smooth_wav, soft=soft, levels=levels)
+            I = smooth(self.coeffs ** 2, wavelet=smooth_wav, thr_estimator=smooth_thr_estimator, soft=soft, 
+                       levels=levels, by_level=by_level, log_transform=log_transform)
         else: # Don't apply any smoothing
             I = self.coeffs ** 2
         # If not regular, keep only locations corresponding to observed values
