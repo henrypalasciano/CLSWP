@@ -5,7 +5,7 @@ from cwt import cwt
 from ews import ews
 from local_acf import local_autocovariance, local_autocorrelation
 from plotting import view
-from smoothing import smooth, mad
+from smoothing import smooth_fun, mad
 from wavelets import Wavelet
 
 class CLSWP():
@@ -81,8 +81,8 @@ class CLSWP():
         delta = self.scales[1] - self.scales[0]
         # Compute the raw wavelet periodogram and apply smoothing
         if smooth:
-            I = smooth(self.coeffs ** 2, wavelet=smooth_wav, thr_estimator=smooth_thr_estimator, soft=soft, 
-                       levels=levels, by_level=by_level, log_transform=log_transform)
+            I = smooth_fun(self.coeffs ** 2, wavelet=smooth_wav, thr_estimator=smooth_thr_estimator, soft=soft, 
+                           levels=levels, by_level=by_level, log_transform=log_transform)
         else: # Don't apply any smoothing
             I = self.coeffs ** 2
         # If not regular, keep only locations corresponding to observed values
