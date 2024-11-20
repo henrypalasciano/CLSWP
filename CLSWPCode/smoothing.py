@@ -1,36 +1,76 @@
 import numpy as np
 from pywt import wavedec, waverec
 
-def wav_periodogram_smoothing(I, wavelet="db5", soft=True, levels=3):
+def smooth(I, wavelet="db5", method=np.std, soft=True, levels=3, by_level=False, log_transform=True):
     """
     Apply wavelet-based smoothing to each level of the raw wavelet periodogram of a locally stationary wavelet process.
 
     Args:
         I (ndarray): Raw wavelet periodogram.
-        wavelet (str, optional): Wavelet to be used for smoothing. For a list of wavelet families use pywt.families(short=True) and for a list of wavelet names use pywt.wavelist(family=None, kind='all'). For more information see https://pywavelets.readthedocs.io/en/latest/ref/index.html. Defaults to "db5".
-        soft (bool, optional): If True, use soft thresholding. If False, use hard thresholding. Defaults to True.
-        levels (int, optional): Finest level of wavelet decomposition not smoothed from. For example levels=3 smoothes the coefficients from the 4rd level onwards, where level 1 is the coarsest scale. Defaults to 3.
+        wavelet (str, optional): Wavelet used for smoothing. For a list of wavelet families use pywt.families(short=True) and for a list of wavelet names use pywt.wavelist(family=None, kind='all'). For more information see https://pywavelets.readthedocs.io/en/latest/ref/index.html. Defaults to "db5".
+        method (function, optional): Method used to calculate the threshold. Defaults to np.std.
+        soft (bool, optional): If True, apply soft thresholding, else apply hard thresholding. Defaults to True.
+        levels (int, optional): Levels to smooth from, with 0 being the coarsest scale. Defaults to 3.
+        by_level (bool, optional): If True, apply a different threshold to each scale of the dwt of each level of the raw wavelet periodogram. Defaults to False.
+        log_transform (bool, optional): If True, apply a log transform to the raw wavelet periodogram before smoothing. Defaults to True.
 
     Returns:
         ndarray: Smoothed raw wavelet periodogram.
     """
-    # Calculate the dimensions of the input array
+    # Number of scales and locations
     (m, n) = np.shape(I)
-    # Decompose the input array using discrete wavelet transform
-    coeffs = wavedec(I, wavelet, axis=1)
-    coeffs_stacked = np.hstack(coeffs[levels+1:])
-    # Calculate the threshold for each level of the raw wavelet periodogram
-    t = (np.std(coeffs_stacked, axis=1) * np.log(n)).reshape(-1,1)
-    # Apply thresholding to the wavelet coefficients
-    if soft:
-        for i,c in enumerate(coeffs[levels+1:]):
-            c = np.sign(c) * np.maximum(np.abs(c) - t, 0)
-            coeffs[i+levels+1] = c
+    # Apply a log transform if necessary
+    if log_transform:
+        I = np.log(I + 1)
+    # Compute the discrete wavelet transfrom of each level of the raw wavelet periodogram
+    dwt = wavedec(I, wavelet, axis=1)
+    # First entry of the dwt is the scaling function coefficient
+    levels += 1
+    
+    if by_level:
+        # Apply a different threshold to each scale of the dwt of each level of the raw wavelet periodogram
+        for i,c in enumerate(dwt[levels:]):
+            t = method(c, axis=1, keepdims=True) * np.log(n)
+            dwt[i + levels] = thr(c, t, soft)
     else:
-        for i,c in enumerate(coeffs[levels+1:]):
-            c = c * (np.abs(c) > t)
-            coeffs[i+levels+1] = c
-    # Return the smoothed wavelet periodogram
-    return waverec(coeffs, wavelet)
+        # Compute a single threshold for each level of the raw wavelet periodogram
+        t = method(np.hstack(dwt[levels:]), axis=1, keepdims=True) * np.log(n)
+        for i,c in enumerate(dwt[levels:]):
+            dwt[i + levels] = thr(c, t, soft)
 
+    # Invert the initial log transform if necessary
+    if log_transform:
+        return np.exp(waverec(dwt, wavelet)) - 1
+    return waverec(dwt, wavelet)
+
+
+def thr(x: np.ndarray, t: np.ndarray, soft: bool = True) -> np.ndarray:
+    """
+    Apply thresholding to an array.
+
+    Args:
+        x (ndarray): Input array.
+        t (ndarray): Threshold.
+        soft (bool, optional): If True, use soft thresholding. If False, use hard thresholding. Defaults to True.
+
+    Returns:
+        ndarray: Thresholded array.
+    """
+    if soft:
+        return np.sign(x) * np.maximum(np.abs(x) - t, 0)
+    return x * (np.abs(x) > t)
+
+
+def mad(x: np.ndarray, axis: int = 1, keepdims: bool = True) -> np.ndarray:
+    """
+    Calculate the median absolute deviation of an array.
+
+    Args:
+        x (ndarray): Input array.
+        axis (int, optional): Axis along which to calculate the median absolute deviation. Defaults to 1.
+
+    Returns:
+        ndarray: Median absolute deviation of the input array.
+    """
+    return np.median(np.abs(x - np.median(x, axis=axis, keepdims=keepdims)), axis=axis, keepdims=keepdims) / 0.6745
 
