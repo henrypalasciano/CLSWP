@@ -96,12 +96,12 @@ class CLSWP():
         if self.regular:
             I = self.I.copy()
         else:
-            I = I[:, self.times].copy()
+            I = self.I[:, self.times].copy()
         # Compute the EWS
         if update:
-            self.S = ews(I, self.A * delta, mu=mu, N=N, S=self.S, u_idx=u_idx)
+            self.S = ews(I, self.A * delta, mu=mu, N=N, S=self.S, u_idx=u_idx) * delta
         else:
-            self.S = ews(I, self.A * delta, mu=mu, N=N, S=None, u_idx=None)
+            self.S = ews(I, self.A * delta, mu=mu, N=N, S=None, u_idx=None) * delta
 
 
     def compute_local_acf(self, tau: np.ndarray):
@@ -205,7 +205,7 @@ class CLSWPIrregularlySpacedData(CLSWP):
             keep_all (bool, optional): Whether to keep all coefficients or only the ones corresponding to non-missing values. Defaults to True.
             """
             ts, times = self.spacing_function(ts, times, sampling_rate)
-            super().__init__(ts, Wavelet, scales, 1, bc)
+            super().__init__(ts, Wavelet, scales, sampling_rate, bc)
             self.regular = keep_all
             if keep_all:
                 self.times = np.arange(0, len(ts))
@@ -227,7 +227,7 @@ class CLSWPIrregularlySpacedData(CLSWP):
             np.ndarray: The regularly spaced data, reweighted based on the distance to neighbouring points and with zeros at the missing locations.
         """
         # Rescale times, so that the first observation is at time 0 and the minimum spacing between any two observations is one
-        times = ((times - times[0]) / sampling_rate).astype(int)
+        times = ((times - times[0]) * sampling_rate).astype(int)
         # Create a new array with NaNs at the missing locations
         y = np.zeros(times[-1] + 1)
         y[times] = (1 + np.convolve((times[1:] - times[:-1] - 1) / 2, np.array([1, 1]))) * x

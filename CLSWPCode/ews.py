@@ -7,8 +7,8 @@ from smoothing import mad
 # Evolutionary Wavelet Spectrum
 # ===================================
 
-def ews(I: np.ndarray, A: np.ndarray, mu: Union[float, np.ndarray] = None, measure: callable = mad, mu_wav: str = "db5",  
-        N: int = 100, S: np.array = None, u_idx: int = None) -> np.ndarray:
+def ews(I: np.ndarray, A: np.ndarray, mu: Union[float, np.ndarray] = None, measure: callable = mad, 
+        mu_wav: str = "db5", N: int = 100, S: np.array = None, u_idx: int = None) -> np.ndarray:
     """
     Compute the Evolutionary Wavelet Spectrum (EWS).
 
@@ -40,7 +40,7 @@ def ews(I: np.ndarray, A: np.ndarray, mu: Union[float, np.ndarray] = None, measu
     I = I / e
     # Initialize the solution vector x with random values between 0 and 1
     if S is None:
-        S = I.copy()
+        S = I
     # Compute A @ y - mu and A @ A
     A_y = A @ I - mu
     A_2 = A @ A
