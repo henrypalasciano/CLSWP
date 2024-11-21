@@ -16,25 +16,28 @@ Functions to compute the continuous wavelet transform, evolutionary wavelet spec
 Continuous time locally stationary wavelet processes for time series with regularly spaced observations.
 ```python
 import numpy as np
-# Sample time series
-ts = np.random.randn(1000)
+from haar_MA import haar_MA
+# Sample a stationary Haar process of length T = 10, order alpha = 1 and 1000 observations long
+ts = haar_MA(10, 1, 100)
 ```
 Create an instance of the CLSWP class for the time series of interest using Haar Wavelets
 ```python
 from CLSWP import CLSWP
 from wavelets import Haar
 # Select scales of interest
-scales = np.linspace(2, 200, 100)
+scales = np.linspace(0.05, 5, 100)
 # Initialise the locally stationary wavelet process
-lsw = CLSWP(ts, Haar, scales, sampling_rate=1, bc="symmetric")
+lsw = CLSWP(ts, Haar, scales, sampling_rate=100, bc="symmetric")
+# Smooth raw wavelet periodogram
+lsw.smooth_rwp(smooth_wav="db3")
 ```
 Compute estimates of the evolutionary wavelet spectrum and local acf
 ```python
 # Estimate evolutionary wavelet spectrum
-lsw.compute_ews(mu=0.01, n_iter=1000)
+lsw.compute_ews(N=1000)
 # Lags of interest
-tau = np.linspace(0, 50, 51)
-# Compute local autocovariance and autocorralation from the estimate of the evolutionary wavelet spectrum
+tau = (np.linspace(0, 5, 101))
+# Compute local autocovariance and autocorralation from the evolutionary wavelet spectrum
 lsw.compute_local_acf(tau)
 ```
 Plot any quantities of interest
@@ -42,32 +45,37 @@ Plot any quantities of interest
 # Plot the evolutionary wavelet spectrum
 lsw.view("Evolutionary Wavelet Spectrum")
 ```
-
+Run the iterative soft-thresholding algorithm for another 1000 iterations on the finer scales
+```python
+# Update the estimate
+lsw.compute_ews(N=1000, update=True, u_idx=50)
+# Plot the evolutionary wavelet spectrum
+lsw.view("Evolutionary Wavelet Spectrum")
+```
 ### Example 2:
 Continuous time locally stationary wavelet processes for time series with irregularly spaced observations.
 ```python
 import numpy as np
-# Sample time series
-ts = np.random.randn(1000)
-# Irregularly spaced observation times
-times = np.sort(np.random.choice(np.linspace(0, 1000, 4001), 1000, replace=False))
+# Irregularly spaced time series
+observed = np.sort(np.random.choice(1000, 750))
+x = haar_MA(10, 1, 100)[observed]
+times = np.arange(0, 10, 0.01)[observed]
 ```
 Create an instance of the CLSWP class for irregularly spaced data for the time series of interest using Haar Wavelets
 ```python
 from CLSWP import CLSWPIrregularlySpacedData
 from wavelets import Haar
 # Select scales of interest
-scales = np.linspace(2, 200, 100)
+scales = np.linspace(0.05, 5, 100)
 # Initialise the locally stationary wavelet process for irregularly spaced data.
-lsw = CLSWPIrregularlySpacedData(ts, Haar, scales, times, sampling_rate=0.25, bc="symmetric", keep_all=False)
+lsw = CLSWPIrregularlySpacedData(ts, Haar, scales, times, sampling_rate=100, bc="symmetric", keep_all=False)
 ```
-The sampling rate determines the minimum distance between any two observations when mapped to a regularly spaced grid. It can also be interpreted as the shift from one location to the next while computing the cwt. The keep_all parameter determines whether the user would like to estimate the evolutionary wavelet spectrum at all locations or only where the data was originally present. Note that once the cwt is computed, the ews is independent of location.  
 Compute estimates of the evolutionary wavelet spectrum and local acf
 ```python
 # Estimate evolutionary wavelet spectrum
-lsw.compute_ews(mu=0.01, n_iter=1000)
+lsw.compute_ews(N=1000)
 # Lags of interest
-tau = np.linspace(0, 50, 51)
+tau = (np.linspace(0, 5, 101))
 # Compute local autocovariance and autocorralation from the estimate of the evolutionary wavelet spectrum
 lsw.compute_local_acf(tau)
 ```
