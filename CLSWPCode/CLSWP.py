@@ -5,7 +5,7 @@ from cwt import cwt
 from ews import ews
 from local_acf import local_autocovariance, local_autocorrelation
 from plotting import view
-from smoothing import smooth_fun, mad
+from smoothing import smooth, mad
 from wavelets import Wavelet
 
 class CLSWP():
@@ -21,6 +21,7 @@ class CLSWP():
         sampling_rate (float): The sampling rate of the time series data.
         bc (str): The boundary condition for the continuous wavelet transform.
         coeffs (np.ndarray): The continuous wavelet transform coefficients.
+        I (np.ndarray): The raw wavelet periodogram.
         A (np.ndarray): The inner product kernel.
         regular (bool): Whether the ews and other estimates lie on a regularly spaced grid. Required for the plotting function.
         times (np.ndarray): The times at which the observations are made.
@@ -30,6 +31,7 @@ class CLSWP():
         local_autocorr (np.ndarray): The local autocorrelation.
 
     Methods:
+        smooth_rwp: Apply wavelet-based smoothing to each level of the raw wavelet periodogram.
         compute_ews: Compute the Evolutionary Wavelet Spectrum (EWS) for a given value of mu, method and number of iterations (if applicable).
         compute_local_acf: Compute the local autocovariance and local autocorrelation for a given set of lags, tau.
         plot: Plot various quantities related to the CLSWP object.
@@ -51,6 +53,7 @@ class CLSWP():
         self.scales = scales
         self.Wavelet = Wavelet(scales)
         self.coeffs = cwt(ts, self.Wavelet, sampling_rate=sampling_rate, bc=bc)
+        self.I = self.coeffs ** 2
         # Compute the inner product kernel
         self.A = self.Wavelet.inner_product_kernel()
         # Whether the ews and other estimates lie on a regularly spaced grid. Required for the plotting function in the child classes.
@@ -58,18 +61,13 @@ class CLSWP():
         # The times at which the observations are made
         self.times = np.arange(0, len(self.ts))
         self.sampling_rate = sampling_rate
-        
-    def compute_ews(self, mu: Union[float, np.ndarray] = None, method: str = "Daubechies_Iter_Asymmetric", N: int = 100, 
-                    smooth: bool = True, smooth_wav: str = "db5", smooth_thr_estimator: callable = np.std, soft: bool = True, 
-                    levels: int  = 3, by_level=False, log_transform=True) -> None:
+    
+    def smooth_rwp(self, smooth_wav: str = "db5", smooth_thr_estimator: callable = np.std, soft: bool = True, 
+                   levels: int  = 3, by_level=False, log_transform=True) -> None:
         """
-        Compute the Evolutionary Wavelet Spectrum (EWS) for a given value of mu, method and number of iterations (if applicable).
+        Apply wavelet-based smoothing to each level of the raw wavelet periodogram.
 
         Args:
-            mu (float or np.ndarray, optional): Regularisation parameter for computing an estimate of the evolutionary wavelet spectrum. If None, the standard deviation of the raw wavelet periodogram is used. This is computed using the entire estimate of the raw wavelet periodogram. For a mu which is a vector or matrix, the regularisation parameter is applied to each element of the raw wavelet periodogram. Defaults to None.
-            method (str, optional): The method for computing the EWS. Defaults to "Daubechies_Iter_Asymmetric".
-            N (int, optional): The number of iterations for computing the EWS. Defaults to 100.
-            smooth (bool, optional): Whether to apply smoothing to the raw wavelet periodogram before estimating the EWS. Defaults to True.
             smooth_wav (str, optional): The wavelet for smoothing the raw wavelet periodogram. Defaults to "db5".
             smooth_thr_estimator (callable, optional): The method used to calculate the threshold. Defaults to np.std.
             soft (bool, optional): Whether to apply soft thresholding. Defaults to True.
@@ -77,19 +75,34 @@ class CLSWP():
             by_level (bool, optional): Whether to apply a different threshold to each scale of the dwt of each level of the raw wavelet periodogram. Defaults to False.
             log_transform (bool, optional): Whether to apply a log transform to the raw wavelet periodogram before smoothing. Defaults to True.
         """
+        self.I = smooth(self.I, wavelet=smooth_wav, thr_estimator=smooth_thr_estimator, soft=soft, 
+                        levels=levels, by_level=by_level, log_transform=log_transform)
+
+    def compute_ews(self, mu: Union[float, np.ndarray] = None, method: str = "Daubechies_Iter_Asymmetric", N: int = 100, 
+                    update: bool = False, u_idx: int = None) -> None:
+        """
+        Compute the Evolutionary Wavelet Spectrum (EWS) for a given value of mu, method and number of iterations (if applicable).
+
+        Args:
+            mu (float or np.ndarray, optional): Regularisation parameter for computing an estimate of the evolutionary wavelet spectrum. If None, the standard deviation of the raw wavelet periodogram is used. This is computed using the entire estimate of the raw wavelet periodogram. For a mu which is a vector or matrix, the regularisation parameter is applied to each element of the raw wavelet periodogram. Defaults to None.
+            method (str, optional): The method for computing the EWS. Defaults to "Daubechies_Iter_Asymmetric".
+            N (int, optional): The number of iterations for computing the EWS. Defaults to 100.
+            update (bool, optional): Whether to update the EWS or start again. Defaults to False.
+            u_idx (int, optional): The index of the widest scale to update to. Defaults to None.
+        """
         # Difference between consecutive scales
         delta = self.scales[1] - self.scales[0]
-        # Compute the raw wavelet periodogram and apply smoothing
-        if smooth:
-            I = smooth_fun(self.coeffs ** 2, wavelet=smooth_wav, thr_estimator=smooth_thr_estimator, soft=soft, 
-                           levels=levels, by_level=by_level, log_transform=log_transform)
-        else: # Don't apply any smoothing
-            I = self.coeffs ** 2
-        # If not regular, keep only locations corresponding to observed values
-        if not self.regular:
-            I = I[:, self.times]
+        # If not regular, only keep locations corresponding to observed values
+        if self.regular:
+            I = self.I.copy()
+        else:
+            I = I[:, self.times].copy()
         # Compute the EWS
-        self.S = ews(I, self.A * delta, mu=mu, N=N)
+        if update:
+            self.S = ews(I, self.A * delta, mu=mu, N=N, S=self.S, u_idx=u_idx)
+        else:
+            self.S = ews(I, self.A * delta, mu=mu, N=N, S=None, u_idx=None)
+
 
     def compute_local_acf(self, tau: np.ndarray):
         """
@@ -114,6 +127,8 @@ class CLSWP():
         times = self.times / self.sampling_rate
         if qty == "Inner Product Kernel":
             view(self.A, self.scales, self.scales, regular=True, title=self.Wavelet.name + " " + qty, x_label="Scale", y_label="Scale", num_x=num_x, num_y=num_y)
+        elif qty == "Raw Wavelet Periodogram":
+            view(self.I, times, self.scales, regular=self.regular, title=qty, x_label="Time", y_label="Scale", num_x=num_x, num_y=num_y)
         elif qty == "Evolutionary Wavelet Spectrum":
             view(self.S, times, self.scales, regular=self.regular, title=qty, x_label="Time", y_label="Scale", num_x=num_x, num_y=num_y)
         elif qty == "Local Autocovariance":

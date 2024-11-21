@@ -1,7 +1,7 @@
 import numpy as np
 from pywt import wavedec, waverec
 
-def smooth_fun(I: np.ndarray, wavelet: str = "db5", thr_estimator: callable = np.std, soft: bool = True, levels: int = 3, by_level: bool = False, log_transform: bool = True) -> np.ndarray:
+def smooth(I: np.ndarray, wavelet: str = "db5", thr_estimator: callable = np.std, soft: bool = True, levels: int = 3, by_level: bool = False, log_transform: bool = True) -> np.ndarray:
     """
     Apply wavelet-based smoothing to each level of the raw wavelet periodogram of a locally stationary wavelet process.
 
