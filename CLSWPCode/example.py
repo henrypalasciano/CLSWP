@@ -4,11 +4,12 @@ from CLSWP import CLSWP, CLSWPMissingData, CLSWPIrregularlySpacedData
 from wavelets import Haar
 # %%
 # Regularly spaced data example
-x = np.random.randn(5000)
+x = np.random.randn(2000)
 scales = np.linspace(1, 100, 100)
 # Initialise CLSWP object
 C1 = CLSWP(x, Haar, scales)
 # Compute the Evolutionary Wavelet Spectrum and plot this
+C1.smooth_rwp()
 C1.compute_ews(N=1000)
 C1.plot("Evolutionary Wavelet Spectrum")
 # %%
