@@ -1,9 +1,10 @@
 # Continuous Time Locally Stationary Wavelet Processes
 
 This repository provides a **Python implementation** of **Continuous Time Locally Stationary Wavelet Processes**,  
-as described in the paper:  
+as introduced in the Biometrika paper:  
 📄 **[Continuous Time Locally Stationary Wavelet Processes](https://doi.org/10.1093/biomet/asaf015)**  
 
+This work extends the **discrete-time** locally stationary wavelet processes of  [Nason et al. (2000)](https://doi.org/10.1111/1467-9868.00231) to the **continuous-time** setting.
 
 ---
 
