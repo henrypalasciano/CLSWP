@@ -108,7 +108,7 @@ If you use **Continuous Time Locally Stationary Wavelet Processes** in your rese
 **Henry Antonio Palasciano**  
 📧 Email: [henry.palasciano17@imperial.ac.uk](mailto:henry.palasciano17@imperial.ac.uk)
 
-**Marina I. Knight**
+**Marina I. Knight**  
 📧 Email: [marina.knight@york.ac.uk](mailto:marina.knight@york.ac.uk)  
 
 **Guy P. Nason**  
