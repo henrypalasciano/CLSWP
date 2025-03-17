@@ -1,12 +1,8 @@
 # Continuous Time Locally Stationary Wavelet Processes
 
-📄 **"Continuous Time Locally Stationary Wavelet Processes"**\
-🔗 **[Read the article in Biometrika](https://doi.org/10.1093/biomet/asaf015)**
-
----
-
-## Overview
-
+This repository provides a **Python implementation** of **Continuous Time Locally Stationary Wavelet Processes**,  
+as described in the paper:  
+📄 **[Continuous Time Locally Stationary Wavelet Processes](https://doi.org/10.1093/biomet/asaf015)**  
 
 
 ---
@@ -90,22 +86,30 @@ lsw.view("Evolutionary Wavelet Spectrum")
 
 ---
 
-## Citation
+## Citing this work
 
-If you use this code in your research, please cite:
+If you use **Continuous Time Locally Stationary Wavelet Processes** in your research, please cite the following paper:  
 
-> **H. A. Palasciano, M. I. Knight and G. P. Nason** (2025). *Continuous Time Locally Stationary Wavelet Processes*. [Biometrika, asaf015](https://doi.org/10.1093/biomet/asaf015).
-
-BibTeX entry:
 
 ```bibtex
-@article{Palasciano2023,
-  author    = {Henry Antonio Palasciano},
+@article{CLSWP,
+  author    = {Palasciano, H. A. and Knight, M. I. and Nason G. P.},
   title     = {Continuous Time Locally Stationary Wavelet Processes},
   journal   = {Biometrika},
-  year      = {2023},
+  year      = {2025},
   doi       = {10.1093/biomet/asaf015},
 }
 ```
 
 ---
+
+## Contact  
+
+**Henry Antonio Palasciano**  
+📧 Email: [henry.palasciano17@imperial.ac.uk](mailto:henry.palasciano17@imperial.ac.uk)
+
+**Marina I. Knight**
+📧 Email: [marina.knight@york.ac.uk](mailto:marina.knight@york.ac.uk)  
+
+**Guy P. Nason**  
+📧 Email: [gnason@imperial.ac.uk](mailto:gnason@imperial.ac.uk)  
