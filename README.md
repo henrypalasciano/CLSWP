@@ -16,7 +16,7 @@
 The repository is organized as follows:
 
 ```plaintext
-📂 Continuous-Time-Wavelet-Processes/
+📂 CLSWP/
  ┣ 📂 methodology/       # Core source code
  ┃ ┣ 📜 wavelets.py      # Defines wavelet objects (Haar, Ricker, Morlet, Shannon)
  ┃ ┣ 📜 cwt.py           # Computes the continuous wavelet transform (CWT)
