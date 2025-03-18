@@ -100,7 +100,7 @@ If you use **Continuous Time Locally Stationary Wavelet Processes** in your rese
   title     = {Continuous Time Locally Stationary Wavelet Processes},
   journal   = {Biometrika},
   year      = {2025},
-  doi       = {10.1093/biomet/asaf015},
+  doi       = {10.1093/biomet/asaf015}
 }
 ```
 
