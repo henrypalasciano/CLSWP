@@ -91,7 +91,7 @@ lsw.view("Evolutionary Wavelet Spectrum")
 
 ## Citing this work
 
-If you use **Continuous Time Locally Stationary Wavelet Processes** in your research, please cite the following paper:  
+If you use **Continuous Time Locally Stationary Wavelet Processes** in your research, please cite our paper:  
 
 
 ```bibtex
