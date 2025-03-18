@@ -96,11 +96,11 @@ If you use **Continuous Time Locally Stationary Wavelet Processes** in your rese
 
 ```bibtex
 @article{CLSWP,
-  author    = {Palasciano, H. A. and Knight, M. I. and Nason G. P.},
-  title     = {Continuous Time Locally Stationary Wavelet Processes},
-  journal   = {Biometrika},
-  year      = {2025},
-  doi       = {10.1093/biomet/asaf015}
+  author = {Palasciano, H. A. and Knight, M. I. and Nason G. P.},
+  title = {Continuous Time Locally Stationary Wavelet Processes},
+  journal = {Biometrika},
+  year = {2025},
+  doi = {10.1093/biomet/asaf015}
 }
 ```
 
