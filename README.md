@@ -22,6 +22,8 @@ The repository is organized as follows:
  ┃ ┣ 📜 local_acf.py     # Computes local autocovariance and autocorrelation from the evolutionary wavelet spectrum
  ┃ ┣ 📜 smoothing.py     # Implementation of wavelet-based smoothing for the raw wavelet periodogram
  ┃ ┣ 📜 plotting.py      # Visualization utilities for CLSWP analysis
+ ┃ ┣ 📜 haar_MA.py       # Function for simulating realisations from Haar moving average processes
+ ┃ ┣ 📜 example.py       # Example usage
  ┣ 📜 README.md          # Project documentation
  ┣ 📜 requirements.txt   # List of dependencies
 ```
