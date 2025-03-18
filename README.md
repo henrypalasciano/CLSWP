@@ -14,14 +14,14 @@ The repository is organized as follows:
 
 ```plaintext
 📂 CLSWP/
- ┣ 📂 methodology/       # Core source code
- ┃ ┣ 📜 wavelets.py      # Defines wavelet objects (Haar, Ricker, Morlet, Shannon)
+ ┣ 📂 methodology/       # Python implementation of Continuous Time Locally Stationary Wavelet Processes (CLSWP)
+ ┃ ┣ 📜 CLSWP.py         # Defines CLSWP classes, including those for handling missing and irregular time series data
+ ┃ ┣ 📜 wavelets.py      # Implements predefined wavelet objects (Haar, Ricker, Morlet, Shannon) with support for custom wavelets
  ┃ ┣ 📜 cwt.py           # Computes the continuous wavelet transform (CWT)
- ┃ ┣ 📜 ews.py           # Computes the evolutionary wavelet spectrum (EWS)
- ┃ ┣ 📜 local_acf.py     # Computes local autocovariance and autocorrelation
- ┃ ┣ 📜 smoothing.py     # Functions for smoothing the raw wavelet periodogram
- ┃ ┣ 📜 plotting.py      # Visualization tools for results
- ┃ ┣ 📜 CLSWP.py         # Classes for creating CLSWP instances (supports irregular data)
+ ┃ ┣ 📜 ews.py           # Computes the evolutionary wavelet spectrum (EWS) from the raw wavelet periodogram
+ ┃ ┣ 📜 local_acf.py     # Computes local autocovariance and autocorrelation from the evolutionary wavelet spectrum
+ ┃ ┣ 📜 smoothing.py     # Implementation of wavelet-based smoothing for the raw wavelet periodogram
+ ┃ ┣ 📜 plotting.py      # Visualization utilities for CLSWP analysis
  ┣ 📜 README.md          # Project documentation
  ┣ 📜 requirements.txt   # List of dependencies
 ```
